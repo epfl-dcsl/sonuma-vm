@@ -1,0 +1,1 @@
+cmd_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/rmc.ko := ld -r -m elf_x86_64 -T /root/stankos_home/SON/linux-3.7.1-Dom0/scripts/module-common.lds --build-id  -o /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/rmc.ko /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/rmc.o /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/rmc.mod.o
