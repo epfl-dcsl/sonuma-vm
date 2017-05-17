@@ -81,7 +81,7 @@ memory_region_t *mr_create(unsigned int page_count);
 int mr_destroy(memory_region_t * mr);
 bool mr_map(domid_t rdomid, int rgref, int rport, Entry *e, struct vm_area_struct *vma);
 bool mr_unmap(Entry * e, unsigned long addr);
-channel_handle_t *create_channel(domid_t rdomid);
-void destroy_channel(channel_handle_t * handle);
+//channel_handle_t *create_channel(domid_t rdomid);
+//void destroy_channel(channel_handle_t * handle);
 void mr_init(void);
 #endif

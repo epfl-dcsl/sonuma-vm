@@ -1,31 +1,39 @@
 /*
+ * Scale-Out NUMA Open Source License
+ *
+ * Copyright (c) 2017, Parallel Systems Architecture Lab, EPFL
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+
+ * * Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * * Neither the name of the Parallel Systems Architecture Lab, EPFL,
+ *   nor the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
+ *   permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE PARALLEL SYSTEMS ARCHITECTURE LAB,
+ * EPFL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  *  Remote memory driver for Scale-Out NUMA
  *
  *  Authors: 
- *  	Stanko Novakovic - EPFL (stanko.novakovic@epfl.ch)
- *
- *  Copyright (C) 2015 - Stanko Novakovic
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
+ *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <linux/init.h>
@@ -45,21 +53,9 @@
 #include <xen/interface/xen.h>
 #include <asm/xen/page.h>
 
-#include <net/sock.h>
-#include <net/inet_sock.h>
-#include <net/protocol.h>
-#include <linux/in.h>
-#include <linux/skbuff.h>
-#include <net/neighbour.h>
-#include <net/dst.h>
-#include <linux/if_ether.h>
-#include <net/inet_common.h>
-#include <linux/inetdevice.h>
 #include <linux/mm.h>
 #include <linux/time.h>
 #include <linux/genhd.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv4.h>
 #include <linux/kthread.h>
 #include <linux/wait.h>
 #include <linux/timer.h>
@@ -70,7 +66,6 @@
 
 #include "main.h"
 #include "debug.h"
-#include "maptable.h"
 #include "mr_alloc.h"
 
 //memory region device
@@ -92,7 +87,7 @@ static int shm_release(struct inode *inode, struct file *filp);
 static int shm_mmap(struct file *filp, struct vm_area_struct *vma);
 static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg);
 
-//all sop_shmmap's methods
+//shmmap methods
 static struct file_operations shmmap_fops = {
     .open = shm_open,
     .release = shm_release,
@@ -104,19 +99,17 @@ static struct file_operations shmmap_fops = {
 //domain ids of remote domains -- support up to 16 domains
 domid_t rdomids[MAX_NODE_CNT];
 Entry rdomh[MAX_NODE_CNT];
-unsigned rdom_connected[MAX_NODE_CNT];
 int num_of_doms = 1;
-
-//this node's dom id
-static domid_t mydomid;
-
-//local memory region
-memory_region_t *local_mr;
 
 //current entry being used for mmap operation
 Entry *current_entry;
 
-static domid_t get_my_domid(void) {
+//local memory region
+memory_region_t *local_mr;
+
+#ifdef GET_DOMID
+static domid_t get_my_domid(void)
+{
   char *domidstr;
   domid_t domid;
 
@@ -132,105 +125,12 @@ static domid_t get_my_domid(void) {
 
   return domid;
 }
+#endif
 
-static int write_xenstore(int status) {
-  int err = 1;
-
-  printk(KERN_CRIT "write_xenstore\n");
-
-  err = xenbus_printf(XBT_NIL, "xenloop", "xenloop", "%d", status);
-  if (err) {
-      printk(KERN_CRIT "writing xenstore xenloop status failed, err = %d \n", err);
-  }
-
-  return err;
-}
-
-//helper functions for dom/node search
-static inline Entry* dom_lookup(domid_t rdomid) {
-    uint8_t i = 0;
-    uint8_t ret = 0;
-
-    printk(KERN_CRIT "dom_lookup ->\n");
-    printk(KERN_CRIT "rdomid in message is %d\n", rdomid);
-    
-    for(; i<num_of_doms; i++) {
-	printk(KERN_CRIT "[sonuma_drv] dom_lookup: node %d\n", i);
-	if(rdomid == rdomh[i].domid) {
-	    printk(KERN_CRIT "[sonuma_drv] dom_lookup: found node with domid %d\n",
-		   rdomh[i].domid);
-	    ret = i; 
-	    break;
-	}
-    }
-
-    return &rdomh[ret];
-}
-
-static inline Entry *node_lookup(int nid) {
-    uint8_t i = 0;
-    
-    for(; i<num_of_doms; i++) {
-	printk(KERN_CRIT "[sonuma_drv] node_lookup: nid = %d, rdomh..nid = %d\n", nid, rdomh[i].nid);
-	if(nid == rdomh[i].nid) {
-	    printk(KERN_CRIT "[sonuma_drv] node ID found %d\n", rdomh[i].nid);
-	    return &rdomh[i];
-	}
-    }
-
-    return NULL;
-}
-
-inline unsigned dom_is_connected(domid_t rdomid) {
-    uint8_t i = 0;
-
-    for(; i<num_of_doms; i++) {
-	if(rdomid == rdomids[i]) {
-	    if(rdom_connected[i] == 1) {
-		return 1;
-	    } else {
-		printk(KERN_CRIT "[dom_is_connected] dom is not connected ..\n");
-		rdom_connected[i] = 1;
-		return 0;
-	    }
-	}
-    }
-    
-    return 1;
-}
-
-//packets exchanged between discovery and nodes, and between nodes
-/*
-static packet_type rmc_ptype = {
-    .type = __constant_htons(ETH_P_TIDC),
-    .func = session_recv,
-    .dev = NULL,
-    .af_packet_priv = NULL,
-};
-*/
-int net_init(void) {
-    int ret = 0;
-    
-    TRACE_ENTRY;
-    
-    printk(KERN_CRIT "net_init <-\n");
-
-    //register session update handler -- information about collocated nodes
-    //dev_add_pack(&rmc_ptype);
-
-    TRACE_EXIT;
-    return ret;
-}
-
-void net_exit(void) {
-    printk(KERN_CRIT "net_exit <-\n");
-    //dev_remove_pack(&rmc_ptype);
-}
-
-static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg) {
+static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
     Entry *e;    
     ioctl_info_t info;
-    //memory_region_reference_t *region_ref;
     mr_reference_info_t *mr_info;
     
     if (copy_from_user(&info, (unsigned char *)arg, sizeof(ioctl_info_t)))
@@ -267,16 +167,17 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg) {
       rdomh[info.node_id].gref = info.desc_gref;
       printk(KERN_CRIT "[ioctl] reference recorded %u\n", rdomh[info.node_id].gref);
        
-    } else if(info.op == RUNMAP) { //it's a remote unmap
+    } else if(info.op == RUNMAP) { 
 	printk(KERN_CRIT "[ioctl] this is unmap operation\n");
-	e = node_lookup(info.node_id);
+	//e = node_lookup(info.node_id);
+	e = &rdomh[info.node_id];
 	if(mr_unmap(e, 0)) {
 	    printk(KERN_CRIT "[ioctl] unmapping failed\n");
 	    return -1;
 	}
     } else {
 	printk(KERN_CRIT "[ioctl] this is mmap operation\n");
-	current_entry = node_lookup(info.node_id);
+	current_entry = &rdomh[info.node_id]; //node_lookup(info.node_id);
 	printk(KERN_CRIT "[ioctl] shm_ioctl: domid = %d, nid = %d, gref = %d\n",
 	       current_entry->domid, current_entry->nid, current_entry->gref);
 	if(current_entry == NULL) {
@@ -288,14 +189,15 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg) {
     return 0;
 }
 
-static int shm_mmap(struct file *filp, struct vm_area_struct *vma) {
+static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
+{
     int ret;
     long length = vma->vm_end - vma->vm_start; 
     
     printk(KERN_CRIT "[shm_mmap] vma size %lu\n", (unsigned long)length);
     
     // map the physically contiguous memory area into the caller's address space
-    if(current_entry == NULL) { //map local memory
+    if(current_entry == NULL) {
       rdomh[mynid].domid = -1;
       rdomh[mynid].nid = -1;
       printk(KERN_CRIT "[shm_mmap] mapping local memory region\n");
@@ -328,41 +230,38 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma) {
     return 0;
 }
 
-static int shm_open(struct inode *inode, struct file *filp) {    
+static int shm_open(struct inode *inode, struct file *filp)
+{
+  printk(KERN_CRIT "[sonuma_drv] shm_open\n");
     return 0;
 }
 
-static int shm_release(struct inode *inode, struct file *filp) {
+static int shm_release(struct inode *inode, struct file *filp)
+{
     printk(KERN_CRIT "[sonuma_drv] shm_release\n");
     return 0;
 }
 
-static void __exit rmc_exit(void) {
+static void __exit rmc_exit(void)
+{
     int i;
     
     TRACE_ENTRY;
     
-    write_xenstore(0);
+    //write_xenstore(0);
     
     printk("[sonuma_drv] rmc_exit: destroying the fabric\n");
     
     //release resources
     for(i=0;i<num_of_doms;i++) {
 	printk(KERN_CRIT "[sonuma_drv] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
-	if(rdomh[i].nid != mynid) {
-	    Entry *e = node_lookup(rdomh[i].nid);
-	    printk(KERN_CRIT "[sonuma_drv] rmc_exit: releasing mr references\n");
-	    if(e != NULL)
-		destroy_mr_reference((mr_reference_info_t *)e->mr_info);
+	if(i != mynid) {
+	  Entry *e = &rdomh[i];
+	  printk(KERN_CRIT "[sonuma_drv] rmc_exit: releasing mr references\n");
+	  if(e != NULL)
+	    destroy_mr_reference((mr_reference_info_t *)e->mr_info);
 	}
     }
-    
-    //destroy local region
-    //mr_destroy(local_mr);
-    
-    net_exit();
-    
-    printk(KERN_CRIT "table cleaned\n");
     
     // remove the character deivce
     cdev_del(&mmap_cdev);
@@ -372,41 +271,22 @@ static void __exit rmc_exit(void) {
     TRACE_EXIT;
 }
 
-static int __init rmc_init(void) {
+static int __init rmc_init(void)
+{
     int rc = 0;
     int ret, i;
     
-    printk(KERN_CRIT "[sonuma_drv] rmc_init ->\n");
-    
     printk(KERN_CRIT "[sonuma_drv] this node's ID is %u\n", mynid);
     printk(KERN_CRIT "[sonuma_drv] page_cnt_log2 is %u\n", page_cnt_log2);
-
-    memset(rdom_connected, 0, MAX_NODE_CNT*sizeof(unsigned));
-    
-    mydomid = get_my_domid();
-    printk(KERN_CRIT "[sonuma_drv] rmc_init: my dom id is %d\n", mydomid);
-
-    if ((rc = net_init()) < 0) {
-	printk(KERN_CRIT "[sonuma_drv] session_init(): net_init failed\n");
-	goto out;
-    }
 
     for(i=0; i<MAX_NODE_CNT; i++) {
       rdomh[i].initialized = 0;
     }
     
-    printk(KERN_CRIT "[sonuma_drv] network initialized\n");
-    
-    write_xenstore(1);
-    
     DPRINTK("[sonuma_drv] Remote memory driver successfully initialized!\n");
     
-    //create memory region
-    //local_mr = mr_create(page_cnt_log2);
     mr_init();
     
-    //BUG_ON(!local_mr);
-  
     //register device
     if ((ret = alloc_chrdev_region(&mmap_dev, 0, 1, "mmap")) < 0) {
 	printk(KERN_ERR "[sonuma_drv] could not allocate major number for mmap\n");

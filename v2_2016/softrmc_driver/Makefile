@@ -13,7 +13,7 @@ all:
 	$(MAKE) MORE_FLAGS='-finline-functions gnu_inline' CFLAGS="-finline-functions" $(ccflags-y) $(ccflags-y_sun) $(ccflags-y_moon) -C $(KDIR_sun) M=$(PWD) modules
 	cp ./rmc.ko ../bin/
 else
-	rmc-objs := main.o maptable.o mr_alloc.o
+	rmc-objs := main.o mr_alloc.o
 	obj-m := rmc.o  
 endif
 

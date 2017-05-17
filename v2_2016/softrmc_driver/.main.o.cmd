@@ -673,105 +673,7 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/smap.h \
     $(wildcard include/config/x86/smap.h) \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/uaccess_64.h \
-  include/net/sock.h \
-    $(wildcard include/config/net.h) \
-    $(wildcard include/config/net/ns.h) \
-    $(wildcard include/config/rps.h) \
-    $(wildcard include/config/net/dma.h) \
-    $(wildcard include/config/xfrm.h) \
-    $(wildcard include/config/cgroups.h) \
-    $(wildcard include/config/memcg/kmem.h) \
-  include/linux/hardirq.h \
-    $(wildcard include/config/generic/hardirqs.h) \
-    $(wildcard include/config/virt/cpu/accounting.h) \
-    $(wildcard include/config/irq/time/accounting.h) \
-  include/linux/ftrace_irq.h \
-    $(wildcard include/config/ftrace/nmi/enter.h) \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/hardirq.h \
-    $(wildcard include/config/x86/thermal/vector.h) \
-    $(wildcard include/config/x86/mce/threshold.h) \
-  include/linux/irq.h \
-    $(wildcard include/config/generic/pending/irq.h) \
-  include/linux/irqreturn.h \
-  include/linux/irqnr.h \
-  include/uapi/linux/irqnr.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/irq.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/irq_regs.h \
-  include/linux/irqdesc.h \
-    $(wildcard include/config/irq/preflow/fasteoi.h) \
-    $(wildcard include/config/sparse/irq.h) \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/hw_irq.h \
-    $(wildcard include/config/irq/remap.h) \
-  include/linux/profile.h \
-    $(wildcard include/config/profiling.h) \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sections.h \
-    $(wildcard include/config/debug/rodata.h) \
-  include/asm-generic/sections.h \
-  include/linux/list_nulls.h \
-  include/linux/netdevice.h \
-    $(wildcard include/config/dcb.h) \
-    $(wildcard include/config/wlan.h) \
-    $(wildcard include/config/ax25.h) \
-    $(wildcard include/config/mac80211/mesh.h) \
-    $(wildcard include/config/tr.h) \
-    $(wildcard include/config/net/ipip.h) \
-    $(wildcard include/config/net/ipgre.h) \
-    $(wildcard include/config/ipv6/sit.h) \
-    $(wildcard include/config/ipv6/tunnel.h) \
-    $(wildcard include/config/netpoll.h) \
-    $(wildcard include/config/xps.h) \
-    $(wildcard include/config/bql.h) \
-    $(wildcard include/config/rfs/accel.h) \
-    $(wildcard include/config/fcoe.h) \
-    $(wildcard include/config/net/poll/controller.h) \
-    $(wildcard include/config/libfcoe.h) \
-    $(wildcard include/config/wireless/ext.h) \
-    $(wildcard include/config/vlan/8021q.h) \
-    $(wildcard include/config/net/dsa.h) \
-    $(wildcard include/config/netprio/cgroup.h) \
-    $(wildcard include/config/net/dsa/tag/dsa.h) \
-    $(wildcard include/config/net/dsa/tag/trailer.h) \
-    $(wildcard include/config/netpoll/trap.h) \
-  include/linux/pm_qos.h \
-  include/linux/plist.h \
-    $(wildcard include/config/debug/pi/list.h) \
-  include/linux/miscdevice.h \
-  include/linux/dmaengine.h \
-    $(wildcard include/config/async/tx/enable/channel/switch.h) \
-    $(wildcard include/config/rapidio/dma/engine.h) \
-    $(wildcard include/config/dma/engine.h) \
-    $(wildcard include/config/async/tx/dma.h) \
-  include/linux/uio.h \
-  include/uapi/linux/uio.h \
-  include/linux/scatterlist.h \
-    $(wildcard include/config/debug/sg.h) \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/scatterlist.h \
-  include/asm-generic/scatterlist.h \
-    $(wildcard include/config/need/sg/dma/length.h) \
-  include/linux/dynamic_queue_limits.h \
-  include/linux/ethtool.h \
-  include/linux/compat.h \
-    $(wildcard include/config/arch/want/old/compat/ipc.h) \
-  include/linux/sem.h \
-    $(wildcard include/config/sysvipc.h) \
-  include/uapi/linux/sem.h \
-  include/linux/ipc.h \
-  include/uapi/linux/ipc.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/ipcbuf.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/ipcbuf.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sembuf.h \
-  include/linux/socket.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/socket.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/socket.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sockios.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/sockios.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/sockios.h \
-  include/uapi/linux/socket.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/if.h \
-  include/linux/hdlc/ioctl.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/aio_abi.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/compat.h \
-    $(wildcard include/config/x86/x32/abi.h) \
+  include/linux/kthread.h \
   include/linux/sched.h \
     $(wildcard include/config/sched/debug.h) \
     $(wildcard include/config/no/hz.h) \
@@ -779,9 +681,11 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
     $(wildcard include/config/detect/hung/task.h) \
     $(wildcard include/config/core/dump/default/elf/headers.h) \
     $(wildcard include/config/sched/autogroup.h) \
+    $(wildcard include/config/virt/cpu/accounting.h) \
     $(wildcard include/config/bsd/process/acct.h) \
     $(wildcard include/config/taskstats.h) \
     $(wildcard include/config/audit.h) \
+    $(wildcard include/config/cgroups.h) \
     $(wildcard include/config/inotify/user.h) \
     $(wildcard include/config/fanotify.h) \
     $(wildcard include/config/posix/mqueue.h) \
@@ -795,6 +699,7 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
     $(wildcard include/config/blk/dev/io/trace.h) \
     $(wildcard include/config/rcu/boost.h) \
     $(wildcard include/config/compat/brk.h) \
+    $(wildcard include/config/sysvipc.h) \
     $(wildcard include/config/rt/mutexes.h) \
     $(wildcard include/config/task/xacct.h) \
     $(wildcard include/config/cpusets.h) \
@@ -804,11 +709,19 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
     $(wildcard include/config/function/graph/tracer.h) \
     $(wildcard include/config/have/hw/breakpoint.h) \
     $(wildcard include/config/have/unstable/sched/clock.h) \
+    $(wildcard include/config/irq/time/accounting.h) \
     $(wildcard include/config/cfs/bandwidth.h) \
     $(wildcard include/config/generic/kernel/thread.h) \
   include/uapi/linux/sched.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/cputime.h \
   include/asm-generic/cputime.h \
+  include/linux/sem.h \
+  include/uapi/linux/sem.h \
+  include/linux/ipc.h \
+  include/uapi/linux/ipc.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/ipcbuf.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/ipcbuf.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sembuf.h \
   include/linux/signal.h \
   include/uapi/linux/signal.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/signal.h \
@@ -825,12 +738,15 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/seccomp_64.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/unistd.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/unistd.h \
+    $(wildcard include/config/x86/x32/abi.h) \
   arch/x86/include/generated/uapi/asm/unistd_64.h \
   arch/x86/include/generated/asm/unistd_64_x32.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/ia32_unistd.h \
   arch/x86/include/generated/asm/unistd_32_ia32.h \
   include/linux/rtmutex.h \
     $(wildcard include/config/debug/rt/mutexes.h) \
+  include/linux/plist.h \
+    $(wildcard include/config/debug/pi/list.h) \
   include/linux/resource.h \
   include/uapi/linux/resource.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/resource.h \
@@ -851,6 +767,108 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
   include/linux/llist.h \
     $(wildcard include/config/arch/have/nmi/safe/cmpxchg.h) \
   include/linux/aio.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/aio_abi.h \
+  include/linux/uio.h \
+  include/uapi/linux/uio.h \
+  /lib/modules/3.7.1/build/arch/x86/include/asm/time.h \
+  include/linux/clocksource.h \
+    $(wildcard include/config/arch/clocksource/data.h) \
+    $(wildcard include/config/clocksource/watchdog.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/clocksource.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/mc146818rtc.h \
+  include/linux/mc146818rtc.h \
+  include/linux/rtc.h \
+    $(wildcard include/config/rtc/intf/dev/uie/emul.h) \
+    $(wildcard include/config/rtc/hctosys/device.h) \
+  include/linux/interrupt.h \
+    $(wildcard include/config/generic/hardirqs.h) \
+    $(wildcard include/config/irq/forced/threading.h) \
+    $(wildcard include/config/generic/irq/probe.h) \
+  include/linux/irqreturn.h \
+  include/linux/irqnr.h \
+  include/uapi/linux/irqnr.h \
+  include/linux/hardirq.h \
+  include/linux/ftrace_irq.h \
+    $(wildcard include/config/ftrace/nmi/enter.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/hardirq.h \
+    $(wildcard include/config/x86/thermal/vector.h) \
+    $(wildcard include/config/x86/mce/threshold.h) \
+  include/linux/irq.h \
+    $(wildcard include/config/generic/pending/irq.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/irq.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/irq_regs.h \
+  include/linux/irqdesc.h \
+    $(wildcard include/config/irq/preflow/fasteoi.h) \
+    $(wildcard include/config/sparse/irq.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/hw_irq.h \
+    $(wildcard include/config/irq/remap.h) \
+  include/linux/profile.h \
+    $(wildcard include/config/profiling.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sections.h \
+    $(wildcard include/config/debug/rodata.h) \
+  include/asm-generic/sections.h \
+  include/uapi/linux/rtc.h \
+  include/linux/seq_file.h \
+  include/linux/cdev.h \
+  include/linux/poll.h \
+  include/uapi/linux/poll.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/poll.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/poll.h \
+  /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.h \
+  /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/debug.h \
+  include/linux/netdevice.h \
+    $(wildcard include/config/dcb.h) \
+    $(wildcard include/config/wlan.h) \
+    $(wildcard include/config/ax25.h) \
+    $(wildcard include/config/mac80211/mesh.h) \
+    $(wildcard include/config/tr.h) \
+    $(wildcard include/config/net/ipip.h) \
+    $(wildcard include/config/net/ipgre.h) \
+    $(wildcard include/config/ipv6/sit.h) \
+    $(wildcard include/config/ipv6/tunnel.h) \
+    $(wildcard include/config/rps.h) \
+    $(wildcard include/config/netpoll.h) \
+    $(wildcard include/config/xps.h) \
+    $(wildcard include/config/bql.h) \
+    $(wildcard include/config/rfs/accel.h) \
+    $(wildcard include/config/fcoe.h) \
+    $(wildcard include/config/net/poll/controller.h) \
+    $(wildcard include/config/libfcoe.h) \
+    $(wildcard include/config/wireless/ext.h) \
+    $(wildcard include/config/vlan/8021q.h) \
+    $(wildcard include/config/net/dsa.h) \
+    $(wildcard include/config/net/ns.h) \
+    $(wildcard include/config/netprio/cgroup.h) \
+    $(wildcard include/config/net/dsa/tag/dsa.h) \
+    $(wildcard include/config/net/dsa/tag/trailer.h) \
+    $(wildcard include/config/netpoll/trap.h) \
+  include/linux/pm_qos.h \
+  include/linux/miscdevice.h \
+  include/linux/dmaengine.h \
+    $(wildcard include/config/async/tx/enable/channel/switch.h) \
+    $(wildcard include/config/rapidio/dma/engine.h) \
+    $(wildcard include/config/dma/engine.h) \
+    $(wildcard include/config/net/dma.h) \
+    $(wildcard include/config/async/tx/dma.h) \
+  include/linux/scatterlist.h \
+    $(wildcard include/config/debug/sg.h) \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/scatterlist.h \
+  include/asm-generic/scatterlist.h \
+    $(wildcard include/config/need/sg/dma/length.h) \
+  include/linux/dynamic_queue_limits.h \
+  include/linux/ethtool.h \
+  include/linux/compat.h \
+    $(wildcard include/config/arch/want/old/compat/ipc.h) \
+  include/linux/socket.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/socket.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/socket.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/sockios.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/sockios.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/sockios.h \
+  include/uapi/linux/socket.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/if.h \
+  include/linux/hdlc/ioctl.h \
+  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/compat.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/user32.h \
   include/uapi/linux/ethtool.h \
   include/linux/if_ether.h \
@@ -859,6 +877,7 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
     $(wildcard include/config/bridge/netfilter.h) \
     $(wildcard include/config/nf/defrag/ipv4.h) \
     $(wildcard include/config/nf/defrag/ipv6.h) \
+    $(wildcard include/config/xfrm.h) \
     $(wildcard include/config/net/sched.h) \
     $(wildcard include/config/net/cls/act.h) \
     $(wildcard include/config/ipv6/ndisc/nodetype.h) \
@@ -903,6 +922,7 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
     $(wildcard include/config/ip/dccp.h) \
     $(wildcard include/config/netfilter.h) \
     $(wildcard include/config/wext/core.h) \
+    $(wildcard include/config/net.h) \
   include/net/netns/core.h \
   include/net/netns/mib.h \
     $(wildcard include/config/xfrm/statistics.h) \
@@ -940,12 +960,12 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
   /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/magic.h \
   include/net/netns/conntrack.h \
     $(wildcard include/config/nf/conntrack/proc/compat.h) \
+  include/linux/list_nulls.h \
   include/linux/netfilter/nf_conntrack_tcp.h \
   include/uapi/linux/netfilter/nf_conntrack_tcp.h \
   include/net/netns/xfrm.h \
   /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/xfrm.h \
   include/linux/seq_file_net.h \
-  include/linux/seq_file.h \
   include/net/dsa.h \
   include/net/netprio_cgroup.h \
   include/linux/cgroup.h \
@@ -978,74 +998,6 @@ deps_/root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.o := \
   /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/if_packet.h \
   include/linux/if_link.h \
   include/uapi/linux/if_link.h \
-  include/linux/uaccess.h \
-  include/linux/memcontrol.h \
-    $(wildcard include/config/memcg/swap.h) \
-    $(wildcard include/config/inet.h) \
-  include/linux/res_counter.h \
-  include/linux/filter.h \
-    $(wildcard include/config/bpf/jit.h) \
-  include/uapi/linux/filter.h \
-  include/linux/rculist_nulls.h \
-  include/linux/poll.h \
-  include/uapi/linux/poll.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/poll.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/asm-generic/poll.h \
-  include/net/dst.h \
-  include/linux/rtnetlink.h \
-  include/uapi/linux/rtnetlink.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/include/uapi/linux/if_addr.h \
-  include/net/neighbour.h \
-  include/net/rtnetlink.h \
-  include/net/netlink.h \
-  include/net/inet_sock.h \
-  include/linux/jhash.h \
-  include/linux/unaligned/packed_struct.h \
-  include/net/request_sock.h \
-  include/net/netns/hash.h \
-  include/net/protocol.h \
-  include/linux/ipv6.h \
-    $(wildcard include/config/ipv6/privacy.h) \
-    $(wildcard include/config/ipv6/router/pref.h) \
-    $(wildcard include/config/ipv6/route/info.h) \
-    $(wildcard include/config/ipv6/optimistic/dad.h) \
-    $(wildcard include/config/ipv6/mip6.h) \
-    $(wildcard include/config/ipv6/subtrees.h) \
-  include/uapi/linux/ipv6.h \
-  include/linux/icmpv6.h \
-  include/uapi/linux/icmpv6.h \
-  include/linux/tcp.h \
-    $(wildcard include/config/tcp/md5sig.h) \
-  include/net/inet_connection_sock.h \
-  include/net/inet_timewait_sock.h \
-  include/net/tcp_states.h \
-  include/net/timewait_sock.h \
-  include/uapi/linux/tcp.h \
-  include/linux/udp.h \
-  include/uapi/linux/udp.h \
-  include/net/inet_common.h \
-  include/linux/inetdevice.h \
-  include/linux/netfilter_ipv4.h \
-  include/uapi/linux/netfilter_ipv4.h \
-  include/linux/kthread.h \
-  /lib/modules/3.7.1/build/arch/x86/include/asm/time.h \
-  include/linux/clocksource.h \
-    $(wildcard include/config/arch/clocksource/data.h) \
-    $(wildcard include/config/clocksource/watchdog.h) \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/clocksource.h \
-  /root/stankos_home/SON/linux-3.7.1-Dom0/arch/x86/include/asm/mc146818rtc.h \
-  include/linux/mc146818rtc.h \
-  include/linux/rtc.h \
-    $(wildcard include/config/rtc/intf/dev/uie/emul.h) \
-    $(wildcard include/config/rtc/hctosys/device.h) \
-  include/linux/interrupt.h \
-    $(wildcard include/config/irq/forced/threading.h) \
-    $(wildcard include/config/generic/irq/probe.h) \
-  include/uapi/linux/rtc.h \
-  include/linux/cdev.h \
-  /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/main.h \
-  /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/debug.h \
-  /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/maptable.h \
   /root/stankos_home/SON/sonuma_vm/v2_2016/softrmc_driver/mr_alloc.h \
   include/xen/balloon.h \
     $(wildcard include/config/xen/balloon/memory/hotplug.h) \
