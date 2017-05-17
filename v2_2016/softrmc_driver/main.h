@@ -47,8 +47,8 @@
 #define MAX_NODE_CNT 16
 
 //for ioctl
-#define RMAP 1
 #define RUNMAP 0
+#define RMAP 1
 #define GETREF 2
 #define PUTREF 3
 #define MR_ALLOC 4
@@ -62,11 +62,10 @@ typedef struct ioctl_info {
 } ioctl_info_t;
 
 typedef struct Entry {
-  int initialized;
-  struct list_head mapping;
   domid_t domid;
   domid_t nid;
 
+  //vm structs
   void *mr_info;
   struct vm_struct *root_rdescriptor_vmarea;
   struct vm_struct *rdescriptor_vmarea[MAX_DESC_PAGES];

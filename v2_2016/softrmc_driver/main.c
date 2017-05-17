@@ -97,7 +97,6 @@ static struct file_operations shmmap_fops = {
 };
 
 //domain ids of remote domains -- support up to 16 domains
-domid_t rdomids[MAX_NODE_CNT];
 Entry rdomh[MAX_NODE_CNT];
 int num_of_doms = 1;
 
@@ -136,7 +135,7 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
     if (copy_from_user(&info, (unsigned char *)arg, sizeof(ioctl_info_t)))
 	return -EFAULT;
 
-    printk(KERN_CRIT "[sonuma_drv] info.op = %d, info.node_id = %d\n", info.op, info.node_id);
+    printk(KERN_CRIT "[ioctl] info.op = %d, info.node_id = %d\n", info.op, info.node_id);
 
     //requesting grant reference
     if(info.op == MR_ALLOC) {
@@ -161,15 +160,12 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	if (copy_to_user((unsigned char *)arg, &info, sizeof(ioctl_info_t)))
 	  return -EFAULT;
       }
-
     } else if(info.op == PUTREF) {
       printk(KERN_CRIT "[ioctl] Operation: PUTREF for remote domain = %d\n", info.node_id);
       rdomh[info.node_id].gref = info.desc_gref;
-      printk(KERN_CRIT "[ioctl] reference recorded %u\n", rdomh[info.node_id].gref);
-       
+      printk(KERN_CRIT "[ioctl] reference recorded %u\n", rdomh[info.node_id].gref);       
     } else if(info.op == RUNMAP) { 
 	printk(KERN_CRIT "[ioctl] this is unmap operation\n");
-	//e = node_lookup(info.node_id);
 	e = &rdomh[info.node_id];
 	if(mr_unmap(e, 0)) {
 	    printk(KERN_CRIT "[ioctl] unmapping failed\n");
@@ -177,7 +173,7 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	}
     } else {
 	printk(KERN_CRIT "[ioctl] this is mmap operation\n");
-	current_entry = &rdomh[info.node_id]; //node_lookup(info.node_id);
+	current_entry = &rdomh[info.node_id];
 	printk(KERN_CRIT "[ioctl] shm_ioctl: domid = %d, nid = %d, gref = %d\n",
 	       current_entry->domid, current_entry->nid, current_entry->gref);
 	if(current_entry == NULL) {
@@ -196,35 +192,24 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
     
     printk(KERN_CRIT "[shm_mmap] vma size %lu\n", (unsigned long)length);
     
-    // map the physically contiguous memory area into the caller's address space
-    if(current_entry == NULL) {
-      rdomh[mynid].domid = -1;
-      rdomh[mynid].nid = -1;
-      printk(KERN_CRIT "[shm_mmap] mapping local memory region\n");
-      if ((ret = remap_pfn_range(vma,
-				 vma->vm_start,
-				 virt_to_phys((void *)local_mr->region) >> PAGE_SHIFT,
-				 length,
-				 vma->vm_page_prot)) < 0) {
-	return -EINVAL;
-      }
-    } else {
+    //map the physically contiguous memory area into the caller's address space
+    if(current_entry != NULL) {
       printk(KERN_CRIT "[sonuma_drv] shm_mmap: mapping remote memory region\n");
-      //memmory map granted page directly to the user
+      //memory map granted page directly to the user
       printk(KERN_CRIT "[sonuma_drv] shm_mmap: domid = %d, nid = %d, gref = %d\n",
 	     current_entry->domid, current_entry->nid, current_entry->gref);
       
       ret = mr_map(current_entry->domid, current_entry->gref, 0, current_entry, vma);
-      current_entry = NULL;
       if(ret) {
 	printk(KERN_CRIT "[shm_mmap] mapping remote region failed\n");
-	
 	return -EINVAL;
       }
-    }
+    } else {
+      printk(KERN_CRIT "[shm_mmap] there's nothing to mmap\n");
+      return -EINVAL;
+    } 
 
     current_entry = NULL;
-    
     printk(KERN_CRIT "shm_mmap: memory is mapped\n");
 
     return 0;
@@ -248,10 +233,6 @@ static void __exit rmc_exit(void)
     
     TRACE_ENTRY;
     
-    //write_xenstore(0);
-    
-    printk("[sonuma_drv] rmc_exit: destroying the fabric\n");
-    
     //release resources
     for(i=0;i<num_of_doms;i++) {
 	printk(KERN_CRIT "[sonuma_drv] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
@@ -267,24 +248,17 @@ static void __exit rmc_exit(void)
     cdev_del(&mmap_cdev);
     unregister_chrdev_region(mmap_dev, 1);
     
-    printk(KERN_CRIT "Exiting xenloop module.\n");
     TRACE_EXIT;
 }
 
 static int __init rmc_init(void)
 {
     int rc = 0;
-    int ret, i;
+    int ret;
     
     printk(KERN_CRIT "[sonuma_drv] this node's ID is %u\n", mynid);
     printk(KERN_CRIT "[sonuma_drv] page_cnt_log2 is %u\n", page_cnt_log2);
 
-    for(i=0; i<MAX_NODE_CNT; i++) {
-      rdomh[i].initialized = 0;
-    }
-    
-    DPRINTK("[sonuma_drv] Remote memory driver successfully initialized!\n");
-    
     mr_init();
     
     //register device
