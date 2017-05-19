@@ -160,7 +160,7 @@ static __inline__ unsigned long long rdtsc(void) {
   __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
   return x;
 }
-
+/*
 void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
 		    uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
@@ -204,4 +204,6 @@ void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
     cq->tail = 0;
     cq->SR ^= 1;
   }
+  
 }
+*/

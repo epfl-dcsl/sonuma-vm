@@ -32,7 +32,7 @@
 SHELL = /bin/sh
 CC    = g++
 
-CFLAGS       = -fPIC -Wall -I$(LIBSONUMA_PATH)
+CFLAGS       = -fPIC -Wall
 
 #-combine
 LDFLAGS	= -shared -fPIC -lc -lpthread -lrt
@@ -43,7 +43,7 @@ SOURCES = \
 	./sonuma_daemon.c
 
 HEADERS = \
-	$(LIBSONUMA_PATH)/sonuma.h
+	./sonuma.h
 
 OBJECTS = $(SOURCES:.c=.o)
 

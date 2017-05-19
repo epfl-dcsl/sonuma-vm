@@ -40,7 +40,7 @@ SOURCES = \
 	./rmcd.c
 
 HEADERS = \
-	$(LIBSONUMA_PATH)/RMCdefines.h
+	$(LIBSONUMA_PATH}/RMCdefines.h
 
 OBJECTS = $(SOURCES:.c=.o)
 
