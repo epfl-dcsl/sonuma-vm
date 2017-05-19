@@ -5,9 +5,7 @@ Sonuma-vm leverages the NUMA assumption of Scale-Out NUMA to emulate a non-coher
 
 Sonuma-vm is envisioned as a software development platform for Scale-Out NUMA. It runs applications at wall-clock speed and can approximate the latency of a real RMC device. 
 
-To compile sample code, the following dependency package is necessary: libsonuma
-
-Need to export LIBSONUMA_PATH=<path to the sonuma library>
+To compile sample code, the following dependency package is necessary: libsonuma (export LIBSONUMA_PATH="path to the sonuma library")
 
 To compile, enter v2_2016 and run (results in ./bin):
 make
