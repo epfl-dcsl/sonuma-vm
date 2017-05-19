@@ -52,7 +52,7 @@ int kal_open(char *kal_name)
 {  
     int fd;
 
-    if ((fd=open(kal_name, O_RDWR|O_SYNC)) < 0) {
+    if((fd=open(kal_name, O_RDWR|O_SYNC)) < 0) {
         return -1;
     }
     return fd;
@@ -60,65 +60,54 @@ int kal_open(char *kal_name)
 
 int kal_reg_wq(int fd, rmc_wq_t **wq_ptr)
 {
-    DLog("[kal_reg_wq] kal_reg_wq called.");
+  int shmid;
+  
+  DLog("[kal_reg_wq] kal_reg_wq called.");
+  
+  FILE *f = fopen("wq_ref.txt", "r");
+  fscanf(f, "%d", &shmid);
+  printf("[kal_reg_wq] ID for the work queue is %d\n", shmid);
+  *wq_ptr = (rmc_wq_t *)shmat(shmid, NULL, 0);
+  if(*wq_ptr == NULL) {
+    printf("[kal_reg_wq] shm attach failed (work queue)\n");
+    return -1;
+  }
 
-#ifdef KERNEL_RMC
-    //posix_memalign((void **)wq, PAGE_SIZE, sizeof(rmc_wq_t));
-    if(ioctl(fd, KAL_REG_WQ, (void *)wq) == -1) {
-      return -1;
-    }
-#else
-    FILE *f;
-    int shmid;
-    f = fopen("wq_ref.txt", "r");
-    fscanf(f, "%d", &shmid);
-    printf("[kal_reg_wq] ID for the work queue is %d\n", shmid);
-    *wq_ptr = (rmc_wq_t *)shmat(shmid, NULL, 0);
-    if(*wq_ptr == NULL) {
-      printf("[kal_reg_wq] shm attach failed (work queue)\n");
-    }
-
-    fclose(f);
-#endif
-
-    return 0;
+  fclose(f);
+  
+  return 0;
 }
 
 int kal_reg_cq(int fd, rmc_cq_t **cq_ptr)
 {
-  DLog("[kal_reg_cq] kal_reg_cq called.");
-#ifdef KERNEL_RMC
-  posix_memalign((void **)cq, PAGE_SIZE, sizeof(rmc_cq_t));
-  //register completion queue
-  if (ioctl(fd, KAL_REG_CQ, (void *)cq) == -1) {
-    return -1;
-  }
-#else
-  FILE *f;
   int shmid;
-  f = fopen("cq_ref.txt", "r");
+  DLog("[kal_reg_cq] kal_reg_cq called.");
+  
+  FILE *f = fopen("cq_ref.txt", "r");
   fscanf(f, "%d", &shmid);
   printf("[kal_reg_cq] ID for the completion queue is %d\n", shmid);
   *cq_ptr = (rmc_cq_t *)shmat(shmid, NULL, 0);
   if(*cq_ptr == NULL) {
     printf("[kal_reg_cq] shm attach failed (completion queue)\n");
+    return -1;
   }
   
   fclose(f);
-#endif
 
   return 0;
 }
 
 int kal_reg_lbuff(int fd, uint8_t **buff_ptr, uint32_t num_pages)
 {
-#ifndef KERNEL_RMC  
+  int shmid;
+  FILE *f;
+  
   if(*buff_ptr == NULL) {
-    FILE *f;
-    int shmid;
     f = fopen("local_buf_ref.txt", "r");
+
     fscanf(f, "%d", &shmid);
     printf("[kal_reg_lbuff] ID for the local buffer is %d\n", shmid);
+
     *buff_ptr = (uint8_t *)shmat(shmid, NULL, 0);
     if(*buff_ptr == NULL) {
       printf("[kal_reg_lbuff] shm attach failed (local buffer)\n");
@@ -126,76 +115,42 @@ int kal_reg_lbuff(int fd, uint8_t **buff_ptr, uint32_t num_pages)
     }
     
     memset(*buff_ptr, 0, 4096);
-
-    fclose(f);
-
-    if (*buff_ptr == NULL) {
-      fprintf(stdout, "Local buffer could not be allocated.\n");
-      return -1;
-    }
   } else {
     printf("[kal_ref_lbuff] local buffer has been allocated, return\n");
     return -1;
   }
-#endif
+
+  fclose(f);
   
-#ifdef KERNEL_RMC
-  DLog("[kal_reg_lbuff] kal_reg_lbuff called in VM mode.");
-  //tell the KAL how long is the buffer
-  ((int *)buff)[0] = num_pages;
-
-  //pin buffer's page frames
-  if(ioctl(fd, KAL_PIN_BUFF, buff) == -1) {
-    return -1;
-  }
-
-  ((int *)buff)[0] = 0x0;
-#else //SOFT_RMC
-  //nothing to be done
-#endif
-
   return 0;
 }
 
 int kal_reg_ctx(int fd, uint8_t **ctx_ptr, uint32_t num_pages)
 {
+  int shmid;
+  FILE *f;
+
   DLog("[kal_reg_ctx] kal_reg_ctx called.");
   
-#ifdef KERNEL_RMC
-  int tmp = ((int *)ctx)[0];
-  
-  ((int *)ctx)[0] = num_pages;
-  
-  //register context
-  if (ioctl(fd, KAL_REG_CTX, ctx) == -1) {
-    perror("kal ioctl failed");
-    return -1;
-  }
-
-  ((int *)ctx)[0] = tmp;
-#else //USER RMC (SOFT RMC)
-  FILE *f;
-  int shmid;
-
   if(*ctx_ptr == NULL) {
     f = fopen("ctx_ref.txt", "r");
+
     fscanf(f, "%d", &shmid);
     printf("[kal_reg_ctx] ID for the context memory is %d\n", shmid);
-    *ctx_ptr = (uint8_t *)shmat(shmid, NULL, 0);
-    
+
+    *ctx_ptr = (uint8_t *)shmat(shmid, NULL, 0);    
     if(*ctx_ptr == NULL) {
       printf("[sonuma] shm attach failed (context)\n");
       return -1;
     }
     
     memset(*ctx_ptr, 0, 4096);
-
-    fclose(f);
   } else {
     DLog("[kal_reg_ctx] error: context memory allready allocated\n");
     return -1;
   }
-#endif
+
+  fclose(f);
   
   return 0;
 }
@@ -227,8 +182,8 @@ void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
   wq->q[wq_head].valid = 1;
   wq->q[wq_head].SR = wq->SR;
 
-
   wq->head =  wq->head + 1;
+
   // check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
     wq->head = 0;

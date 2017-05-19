@@ -36,8 +36,6 @@
  *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
-#include "rmcd.h"
-
 #include <stdbool.h>
 #include <sys/ioctl.h>
 #include <sys/shm.h>
@@ -46,6 +44,8 @@
 
 #include <vector>
 #include <algorithm>
+
+#include "rmcd.h"
 
 using namespace std;
 

@@ -82,12 +82,12 @@ int main(int argc, char **argv)
   uint64_t ctx_offset;
 
   //local buffer
-  kal_reg_lbuff(0, &lbuff, 0);
+  kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
   fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
 	  lbuff, buf_size/PAGE_SIZE);
 
   //context
-  kal_reg_ctx(0, &ctx, 0);
+  kal_reg_ctx(0, &ctx, ctx_size/PAGE_SIZE);
   fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
 	  ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
 
