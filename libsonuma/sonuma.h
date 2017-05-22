@@ -325,7 +325,6 @@ static inline int rmc_drain_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handle
     cq_tail = cq->tail;
     
     handler(tid, &(wq->q[tid]), owner);
-    return 1;
   }
   
   return 0;

@@ -7,6 +7,7 @@ Sonuma-vm is envisioned as a software development platform for Scale-Out NUMA. I
 
 
 ### compile<br/>
+export LIBSONUMA_PATH="path to libsonuma"<br\>
 make (output in ./bin)<br/> 
 <br />
 ### clean<br />
