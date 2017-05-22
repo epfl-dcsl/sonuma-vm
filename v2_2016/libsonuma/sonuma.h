@@ -246,11 +246,25 @@ static inline void rmc_rread_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
 
 //CAUTION: make sure you call rmc_check_cq() before this function
 static inline void rmc_rwrite_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
-				    uint32_t ctx_id, uint64_t ctx_offset, uint64_t length) {
-  //uint8_t wq_head = wq->head;
+				    uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+{
   
   DLogPerf("[sonuma] rmc_rwrite_async called in VM mode.");
-  //create_wq_entry_emu(wq, lbuff_slot, snid, ctx_id, ctx_offset, length);
+  
+  uint8_t wq_head = wq->head;
+ 
+  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].cid = ctx_id;
+  wq->q[wq_head].offset = ctx_offset;
+  if(length < 64)
+    wq->q[wq_head].length = 64; //at least 64B
+  else
+    wq->q[wq_head].length = length; //specify the length of the transfer
+  wq->q[wq_head].op = 'w';
+  wq->q[wq_head].nid = snid;
+  //soNUMA v2.1
+  wq->q[wq_head].valid = 1;
+  wq->q[wq_head].SR = wq->SR;
 
   wq->head =  wq->head + 1;
   // check if WQ reached its end
@@ -295,14 +309,10 @@ static inline int rmc_drain_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handle
   uint8_t tid;
   uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
-
   
-  // in the inner loop we iterate over completed entries in the CQ
-  //for(int i = 0; i < MAX_NUM_WQ) {
-    
-  if(cq->q[cq_tail].SR == cq->SR) {
+  while(cq->q[cq_tail].SR == cq->SR) {
     tid = cq->q[cq_tail].tid;
-    wq->q[tid].valid = 0; // invalidate corresponding entry in WQ
+    wq->q[tid].valid = 0;
     
     cq->tail = cq->tail + 1;
     

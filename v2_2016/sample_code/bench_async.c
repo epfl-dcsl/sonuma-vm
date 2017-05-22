@@ -52,10 +52,12 @@
 using namespace std;
 
 static uint8_t *lbuff;
+static uint32_t op_cnt;
 
 void handler(uint8_t tid, wq_entry_t *head, void *owner) {
   printf("[handler] buffer offset for this WQ entry: %u\n", head->buf_addr);
   printf("[handler] read this number: %u\n", ((uint32_t*)lbuff)[head->buf_addr/sizeof(uint32_t)]);
+  op_cnt--;
 }
 
 int main(int argc, char **argv)
@@ -64,7 +66,7 @@ int main(int argc, char **argv)
   rmc_cq_t *cq;
 
   int num_iter = (int)ITERS;
-
+  
   if (argc != 5) {
     fprintf(stdout,"Usage: ./bench_sync <target_nid> <context_size> <buffer_size>\n");
     return 1;
@@ -81,6 +83,8 @@ int main(int argc, char **argv)
   uint64_t ctx_offset;
 
   lbuff = NULL;
+
+  op_cnt = (int)ITERS;
   
   //local buffer
   kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
@@ -110,18 +114,17 @@ int main(int argc, char **argv)
     printf("[loop] local buffer offset: %u; context offset: %u\n",
 	   lbuff_slot, ctx_offset/PAGE_SIZE);
 
+    rmc_check_cq(wq, cq, &handler, NULL);            
+
     if(op == 'r') {
-      rmc_check_cq(wq, cq, &handler, NULL);            
       rmc_rread_async(wq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else if(op == 'w') {
-      //TODO
-      ;
+      rmc_rwrite_async(wq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else
       ;
   }
 
-  //need to wait to drain CQ
-  for(int i = 0; i < 10000; i++) {
+  while(op_cnt > 0) {
     rmc_drain_cq(wq, cq, &handler, NULL);   
   }
   
