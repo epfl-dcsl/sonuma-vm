@@ -8,26 +8,29 @@ Sonuma-vm is envisioned as a software development platform for Scale-Out NUMA. I
 To compile sample code, the following dependency package is necessary: libsonuma (export LIBSONUMA_PATH="path to the sonuma library")
 
 To compile, enter v2_2016 and run (results in ./bin):
-make
+make<br/>
+<br />
+To clean:<br />
+make clean<br/>
+<br />
+#server 0 (map remote regions)<br />
+insmod ./rmc.ko mynid=0 page_cnt_log2=16<br />
+#server 1<br />
+insmod ./rmc.ko mynid=1 page_cnt_log2=16<br />
+<br />
 
-To clean:
-make clean
+#server 0 (run rmcd)<br />
+taskset -c 1 ./rmcd 2 0 &<br />
+#server 1<br />
+taskset -c 1 ./rmcd 2 1 &<br />
+<br />
 
-#server 0 (map remote regions)
-insmod ./rmc.ko mynid=0 page_cnt_log2=16
-#server 1
-insmod ./rmc.ko mynid=1 page_cnt_log2=16
-
-#server 0 (run rmcd)
-taskset -c 1 ./rmcd 2 0 &
-#server 1
-taskset -c 1 ./rmcd 2 1 &
-
-#server 1 (write values to the context)
-taskset -c 0 ./bench_server 16777216
-#server 0 (read values from the memory of server 1
-taskset -c 0 ./bench_sync 1 16777216 4096 r
-#server 0 (zero out the memory of server 1, read again to check)
-taskset -c 0 ./bench_sync 1 16777216 4096 w
-#sever 0 (read from remote memory asynchronously)
-taskset -c 0 ./bench_async 1 16777216 4096 r
+#server 1 (write values to the context)<br />
+taskset -c 0 ./bench_server 16777216<br />
+#server 0 (read values from the memory of server 1<br />
+taskset -c 0 ./bench_sync 1 16777216 4096 r<br />
+#server 0 (zero out the memory of server 1, read again to check)<br />
+taskset -c 0 ./bench_sync 1 16777216 4096 w<br />
+#sever 0 (read from remote memory asynchronously)<br />
+taskset -c 0 ./bench_async 1 16777216 4096 r<br />
+<br />
