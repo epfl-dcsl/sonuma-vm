@@ -5,26 +5,28 @@ Sonuma-vm leverages the NUMA assumption of Scale-Out NUMA to emulate a non-coher
 
 Sonuma-vm is envisioned as a software development platform for Scale-Out NUMA. It runs applications at wall-clock speed and can approximate the latency of a real RMC device. 
 
-To compile sample code, the following dependency package is necessary: libsonuma (export LIBSONUMA_PATH="path to the sonuma library")
 
-To compile, enter v2_2016 and run (results in ./bin):
-make<br/>
+### compile ###<br/>
+make<br/> (output in ./bin)
 <br />
-To clean:<br />
+### clean ###<br />
 make clean<br/>
 <br />
+### insert kernel driver to map remote regions ###<br />
 #server 0 (map remote regions)<br />
 insmod ./rmc.ko mynid=0 page_cnt_log2=16<br />
 #server 1<br />
 insmod ./rmc.ko mynid=1 page_cnt_log2=16<br />
 <br />
 
+### run RMC daemon ###
 #server 0 (run rmcd)<br />
 taskset -c 1 ./rmcd 2 0 &<br />
 #server 1<br />
 taskset -c 1 ./rmcd 2 1 &<br />
 <br />
 
+### read/write from remote memory using sync/async operations ###
 #server 1 (write values to the context)<br />
 taskset -c 0 ./bench_server 16777216<br />
 #server 0 (read values from the memory of server 1<br />
@@ -33,4 +35,6 @@ taskset -c 0 ./bench_sync 1 16777216 4096 r<br />
 taskset -c 0 ./bench_sync 1 16777216 4096 w<br />
 #sever 0 (read from remote memory asynchronously)<br />
 taskset -c 0 ./bench_async 1 16777216 4096 r<br />
+#sever 0 (write remote memory asynchronously)<br />
+taskset -c 0 ./bench_async 1 16777216 4096 w<br />
 <br />
