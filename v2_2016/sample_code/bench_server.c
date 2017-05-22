@@ -43,30 +43,30 @@
 
 int main(int argc, char **argv)
 {
-  if (argc != 4) {
-    fprintf(stdout,"Usage: ./uBench <target_nid> <context_size> <buffer_size>\n");
+  if (argc != 2) {
+    fprintf(stdout,"Usage: ./bench_server <context_size>\n");
     return 1;
   }
   
-  int snid = atoi(argv[1]);
-  uint64_t ctx_size = atoi(argv[2]);
-  uint64_t buf_size = atoi(argv[3]);
-
-  uint8_t *lbuff = NULL;
+  uint64_t ctx_size = atoi(argv[1]);
+  
+  //uint8_t *lbuff = NULL;
   uint8_t *ctx = NULL;
   
   //local buffer
+  /*
   kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
   fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
 	  lbuff, buf_size/PAGE_SIZE);
-
+  */
+  
   //context
   kal_reg_ctx(0, &ctx, ctx_size/PAGE_SIZE);
   fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
 	  ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
 
   //write the sequence number at the beginning of each page
-  for(size_t i = 0; i < 4096; i++) {
+  for(size_t i = 0; i < ctx_size/PAGE_SIZE; i++) {
       ((uint32_t*)ctx)[(i*PAGE_SIZE)/4] = i;
       printf("wrote this number: %u\n", ((uint32_t*)ctx)[(i*PAGE_SIZE)/4]);
   }

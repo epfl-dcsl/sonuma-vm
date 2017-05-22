@@ -168,9 +168,9 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slo
 
 }
 
-static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot,
-				   int snid, uint32_t ctx_id, uint64_t ctx_offset,
-				   uint64_t length) {
+static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
+				   uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+{
   uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
   
@@ -218,13 +218,25 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_sl
 static inline void rmc_rread_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
 				   uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
-  //uint8_t wq_head = wq->head;
-  
   DLogPerf("[sonuma] rmc_rread_async called in VM mode.");
-  //TODO: insert a new WQ entry
-  //create_wq_entry_emu(wq, lbuff_slot, snid, ctx_id, ctx_offset, length);
+  
+  uint8_t wq_head = wq->head;
+ 
+  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].cid = ctx_id;
+  wq->q[wq_head].offset = ctx_offset;
+  if(length < 64)
+    wq->q[wq_head].length = 64; //at least 64B
+  else
+    wq->q[wq_head].length = length; //specify the length of the transfer
+  wq->q[wq_head].op = 'r';
+  wq->q[wq_head].nid = snid;
+  //soNUMA v2.1
+  wq->q[wq_head].valid = 1;
+  wq->q[wq_head].SR = wq->SR;
   
   wq->head =  wq->head + 1;
+  
   // check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
     wq->head = 0;
@@ -246,6 +258,67 @@ static inline void rmc_rwrite_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
       wq->head = 0;
       wq->SR ^= 1;
   }
+}
+
+static inline int rmc_check_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handler, void *owner)
+{
+  uint8_t tid;
+  uint8_t wq_head = wq->head;
+  uint8_t cq_tail = cq->tail;
+
+  // in the outer loop we wait for a free entry in the WQ head
+  do { 
+    // in the inner loop we iterate over completed entries in the CQ
+    while (cq->q[cq_tail].SR == cq->SR) {
+      tid = cq->q[cq_tail].tid;
+      wq->q[tid].valid = 0; // invalidate corresponding entry in WQ
+      
+      cq->tail = cq->tail + 1;
+
+      // check if WQ reached its end
+      if (cq->tail >= MAX_NUM_WQ) {
+	cq->tail = 0;
+	cq->SR ^= 1;
+      }
+
+      cq_tail = cq->tail;
+      
+      handler(tid, &(wq->q[tid]), owner);
+    }
+  } while (wq->q[wq_head].valid);
+  
+  return 0;
+}
+
+static inline int rmc_drain_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handler, void *owner)
+{
+  uint8_t tid;
+  uint8_t wq_head = wq->head;
+  uint8_t cq_tail = cq->tail;
+
+  
+  // in the inner loop we iterate over completed entries in the CQ
+  //for(int i = 0; i < MAX_NUM_WQ) {
+    
+  if(cq->q[cq_tail].SR == cq->SR) {
+    tid = cq->q[cq_tail].tid;
+    wq->q[tid].valid = 0; // invalidate corresponding entry in WQ
+    
+    cq->tail = cq->tail + 1;
+    
+    // check if WQ reached its end
+    if (cq->tail >= MAX_NUM_WQ) {
+      cq->tail = 0;
+      cq->SR ^= 1;
+    }
+    
+    cq_tail = cq->tail;
+    
+    handler(tid, &(wq->q[tid]), owner);
+    return 1;
+  }
+  
+  return 0;
 }
 
 #endif /* H_SONUMA */

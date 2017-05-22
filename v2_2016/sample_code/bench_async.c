@@ -41,23 +41,21 @@
 
 #include "sonuma.h"
 
-#define ITERS           4096
+#define ITERS 4096
 #define BILLION 1000000000
 
-#define SLOT_SIZE       64
-#define OBJ_READ_SIZE   64
+#define SLOT_SIZE 64
+#define OBJ_READ_SIZE 64
 
-#define CTX_0           0
-
-//#define USE_TIMER
+#define CTX_0 0
 
 using namespace std;
 
-static __inline__ unsigned long long rdtsc(void) {
-  unsigned long hi, lo;
-  __asm__ __volatile__ ("xorl %%eax,%%eax\ncpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
-  __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-  return ((unsigned long long)lo) | (((unsigned long long)hi)<<32) ;
+static uint8_t *lbuff;
+
+void handler(uint8_t tid, wq_entry_t *head, void *owner) {
+  printf("[handler] buffer offset for this WQ entry: %u\n", head->buf_addr);
+  printf("[handler] read this number: %u\n", ((uint32_t*)lbuff)[head->buf_addr/sizeof(uint32_t)]);
 }
 
 int main(int argc, char **argv)
@@ -67,20 +65,23 @@ int main(int argc, char **argv)
 
   int num_iter = (int)ITERS;
 
-  if (argc != 4) {
-    fprintf(stdout,"Usage: ./uBench <target_nid> <context_size> <buffer_size>\n");
+  if (argc != 5) {
+    fprintf(stdout,"Usage: ./bench_sync <target_nid> <context_size> <buffer_size>\n");
     return 1;
   }
     
   int snid = atoi(argv[1]);
   uint64_t ctx_size = atoi(argv[2]);
   uint64_t buf_size = atoi(argv[3]);
-  
-  uint8_t *lbuff = NULL;
+  char op = *argv[4];
+
+
   uint8_t *ctx;
   uint64_t lbuff_slot;
   uint64_t ctx_offset;
 
+  lbuff = NULL;
+  
   //local buffer
   kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
   fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
@@ -100,54 +101,29 @@ int main(int argc, char **argv)
   fprintf(stdout,"Init done! Will execute %d WQ operations - SYNC! (snid = %d)\n",
 	  num_iter, snid);
 
-#ifdef USE_TIMER
-  struct timespec start_time, end_time;
-  uint64_t start_time_ns, end_time_ns;
-  vector<uint64_t> stimes;
-#else
-  unsigned long long start, end;
-#endif
-  
   lbuff_slot = 0;
   
   for(size_t i = 0; i < num_iter; i++) {
-    ctx_offset = (i * PAGE_SIZE) % ctx_size; // - PAGE_SIZE);
-
-#ifdef USE_TIMER
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-#else
-    start = rdtsc();
-#endif
-
-    rmc_rread_sync(wq, cq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
-
-#ifdef USE_TIMER
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
-#else
-    end = rdtsc();
-#endif
+    ctx_offset = (i * PAGE_SIZE) % ctx_size; 
+    lbuff_slot = (i * sizeof(uint32_t)) % (PAGE_SIZE - OBJ_READ_SIZE);
     
-#ifdef USE_TIMER
-    start_time_ns = BILLION * start_time.tv_sec + start_time.tv_nsec;
-    end_time_ns = BILLION * end_time.tv_sec + end_time.tv_nsec;
-    
-    stimes.insert(stimes.begin(), end_time_ns - start_time_ns);
-    
-    if(stimes.size() == 100) {
-      long sum = 0;
-      sort(stimes.begin(), stimes.end());
-      for(int i=0; i<100; i++)
-	sum += stimes[i];
-      printf("[hophashtable_asy] min latency: %u ns; median latency: %u ns; 99th latency: %u ns; avg latency: %u ns\n", stimes[0], stimes[50], stimes[99], sum/100);
-      
-      while (!stimes.empty())
-	stimes.pop_back();
-    }
-#else    
-    printf("read this number: %u\n", ((uint32_t*)lbuff)[lbuff_slot]);
-    printf("time to execute this op: %lf ns\n", ((double)end - start)/2.4);
-#endif
+    printf("[loop] local buffer offset: %u; context offset: %u\n",
+	   lbuff_slot, ctx_offset/PAGE_SIZE);
+
+    if(op == 'r') {
+      rmc_check_cq(wq, cq, &handler, NULL);            
+      rmc_rread_async(wq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
+    } else if(op == 'w') {
+      //TODO
+      ;
+    } else
+      ;
   }
- 
+
+  //need to wait to drain CQ
+  for(int i = 0; i < 10000; i++) {
+    rmc_drain_cq(wq, cq, &handler, NULL);   
+  }
+  
   return 0;
 }

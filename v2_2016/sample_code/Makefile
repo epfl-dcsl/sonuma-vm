@@ -35,30 +35,41 @@ CC    = g++
 CFLAGS	= -I$(LIBSONUMA_PATH)
 LDFLAGS	= -L../libsonuma -lsonuma -lrt
 
-TARGET  = rread_sync
+TARGET  = bench_sync
 
 SOURCES = \
-	./rread_sync.c
+	./bench_sync.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
-TARGET1  = rread_server
+TARGET1  = bench_server
 
 SOURCES1 = \
-	./rread_server.c
+	./bench_server.c
 
 OBJECTS1 = $(SOURCES1:.c=.o)
 
-rread_sync: $(TARGET) $(TARGET1)
+TARGET2  = bench_async
+
+SOURCES2 = \
+	./bench_async.c
+
+OBJECTS2 = $(SOURCES2:.c=.o)
+
+bench_sync: $(TARGET) $(TARGET1) $(TARGET2)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJECTS) 
-	cp ./rread_sync ../bin/
+	cp ./bench_sync ../bin/
 #rread_server: $(TARGET1)
 
 $(TARGET1): $(OBJECTS1)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET1) $(OBJECTS1)
-	cp ./rread_server ../bin/
+	cp ./bench_server ../bin/
+
+$(TARGET2): $(OBJECTS2)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET2) $(OBJECTS2)
+	cp ./bench_async ../bin/
 
 clean:
-	-${RM} ${TARGET} ${TARGET1} ${OBJECTS} ${OBJECTS1} $(SRCS:.c=.o)
+	-${RM} ${TARGET} ${TARGET1} ${TARGET2} ${OBJECTS} ${OBJECTS1} ${OBJECTS2} $(SRCS:.c=.o)

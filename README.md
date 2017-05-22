@@ -12,3 +12,22 @@ make
 
 To clean:
 make clean
+
+#server 0 (map remote regions)
+insmod ./rmc.ko mynid=0 page_cnt_log2=16
+#server 1
+insmod ./rmc.ko mynid=1 page_cnt_log2=16
+
+#server 0 (run rmcd)
+taskset -c 1 ./rmcd 2 0 &
+#server 1
+taskset -c 1 ./rmcd 2 1 &
+
+#server 1 (write values to the context)
+taskset -c 0 ./bench_server 16777216
+#server 0 (read values from the memory of server 1
+taskset -c 0 ./bench_sync 1 16777216 4096 r
+#server 0 (zero out the memory of server 1, read again to check)
+taskset -c 0 ./bench_sync 1 16777216 4096 w
+#sever 0 (read from remote memory asynchronously)
+taskset -c 0 ./bench_async 1 16777216 4096 r
