@@ -268,36 +268,36 @@ mr_reference_info_t *create_mr_reference(unsigned long mem, domid_t remote_domid
       goto err;
     }
   }
-
+  
   //grant access to application pages
   printk(KERN_CRIT "[create_mr_reference] reference to descriptors granted\n");
-   for(i=0; i<MAX_REGION_PAGES; i++) {
-     paddr = any_v2p(mem + (i*PAGE_SIZE));
-     pfn = paddr >> PAGE_SHIFT;
+  for(i=0; i<MAX_REGION_PAGES; i++) {
+    paddr = any_v2p(mem + (i*PAGE_SIZE));
+    pfn = paddr >> PAGE_SHIFT;
+    
+    mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES] =
+      gnttab_grant_foreign_access(remote_domid,
+				  pfn_to_mfn(pfn),
+				  0);
      
-     mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES] =
-       gnttab_grant_foreign_access(remote_domid,
-				   pfn_to_mfn(pfn),
-				   0);
-     
-     if(mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES] < 0) {
-       printk(KERN_CRIT "[create_mr_reference] cannot share region page\n");
-       while(--i)
-	 gnttab_end_foreign_access_ref(mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES], 0);     
-       for(j=0; j<mr_info->root_mr_ref->num_pages; j++) {
-	 gnttab_end_foreign_access_ref(mr_info->root_mr_ref->desc_grefs[j], 0);
-       }
-       gnttab_end_foreign_access_ref(mr_info->root_mr_ref->root_desc_gref, 0);
-       goto err;
-     }
-   }
-   
-   printk(KERN_CRIT "[create_mr_reference] ALL data pages GRANTED\n");
-   return mr_info;
+    if(mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES] < 0) {
+      printk(KERN_CRIT "[create_mr_reference] cannot share region page\n");
+      while(--i)
+	gnttab_end_foreign_access_ref(mr_info->mr_refs[i/MAX_DESC_PAGES]->desc_grefs[i%MAX_DESC_PAGES], 0);     
+      for(j=0; j<mr_info->root_mr_ref->num_pages; j++) {
+	gnttab_end_foreign_access_ref(mr_info->root_mr_ref->desc_grefs[j], 0);
+      }
+      gnttab_end_foreign_access_ref(mr_info->root_mr_ref->root_desc_gref, 0);
+      goto err;
+    }
+  }
+  
+  printk(KERN_CRIT "[create_mr_reference] ALL data pages GRANTED\n");
+  return mr_info;
    
  err:
-   
-   return NULL;
+  
+  return NULL;
 }
 
 static int map_grant_pages(Entry *e)

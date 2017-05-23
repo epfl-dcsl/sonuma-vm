@@ -41,12 +41,12 @@
 
 #include <xen/grant_table.h>
 
-#define MAX_REGION_PAGES 4096 //this is max 65536
+#define MAX_REGION_PAGES 4096 
 #define MAX_DESC_PAGES 256
 #define MAX_ROOT_DESC_PAGES 16
+
 #define MAX_NODE_CNT 16
 
-//for ioctl
 #define RUNMAP 0
 #define RMAP 1
 #define GETREF 2

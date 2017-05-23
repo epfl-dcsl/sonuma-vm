@@ -62,7 +62,9 @@
 #define PORT 7000
 
 #define MAX_NODE_CNT 24
-#define MAX_REGION_PAGES 4096
+
+// this has to be aligned with VMM's MAX
+#define MAX_REGION_PAGES 4096 
 
 #define RUNMAP 0
 #define RMAP 1

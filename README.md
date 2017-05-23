@@ -1,7 +1,7 @@
 # sonuma-vm
-Sonuma-vm is an all-software implementation of Scale-Out NUMA, a high-performance rack-scale system for in-memory data processing. Scale-Out NUMA replaces the cache-coherence protocol of ccNUMA with a one-sided (RDMA-like) protocol for explicit access to remote memory (with copy semantics). Such remote memory accesses are layered on top of the NUMA's cache-block request/reply protocol through a specialized on-chip hardware block called remote memory controller (RMC).
+Sonuma-vm is an all-software, proof-of-concept implementation of Scale-Out NUMA, a high-performance rack-scale system for in-memory data processing. Scale-Out NUMA runs a one-sided (RDMA-like) protocol for explicit access to remote memory (with copy semantics) in lieu of a cache-coherence protocol. Such remote memory accesses are layered on top of the NUMA's cache-block request/reply transport through a specialized on-chip hardware block called remote memory controller (RMC). Sonuma-vm is also a software development platform that can run your Scale-Out NUMA applications at native machine speed and approximate the remote access latency of an actual, hardware RMC.
 
-Sonuma-vm leverages the NUMA assumption of Scale-Out NUMA to emulate a non-coherent NUMA machine with explicit, one-sided access to remote memory (Scale-Out NUMA) by combining a fully-coherent NUMA machine (ccNUMA) and a virtual machine monitor (hypervisor). Sonuma-vm emulates a multi-node Scale-Out NUMA system using a set of virtual machines (VM) mapped (in terms of VCPU and page frames) to distinct NUMA domains of a giant ccNUMA machine. Sonuma-vm leverages the underlying hypervisor to enable access to remote memory - the memory of other NUMA domains. The RMC is implemented in software using byte copy and runs on a dedicated VCPU in each VM. Sonuma-vm uses hardware virtualization (CPU and IO) to minimize the overhead of emulation.
+Sonuma-vm emulates a non-coherent NUMA machine with explicit, one-sided access to remote memory (i.e., Scale-Out NUMA) by combining a fully-coherent NUMA machine (ccNUMA) and a virtual machine monitor (hypervisor). Sonuma-vm emulates a multi-node Scale-Out NUMA system using a set of virtual machines (VM) mapped (VCPU, page frames) to distinct NUMA domains of a giant ccNUMA machine. Sonuma-vm leverages the underlying hypervisor to enable access to remote memory (i.e., the memory of other NUMA domains). The RMC is implemented in software and runs on a dedicated VCPU in each VM. Sonuma-vm uses hardware virtualization (CPU and IO) to minimize the overhead of emulation. This platform comes with a library providing the Scale-Out NUMA API from our ASPLOS'14 paper. 
 
 Sonuma-vm is envisioned as a software development platform for Scale-Out NUMA. It runs applications at wall-clock speed and can approximate the latency of a real RMC device. 
 
@@ -15,9 +15,9 @@ make clean<br/>
 <br />
 ### insert kernel driver to map remote regions<br />
 #server 0 (map remote regions)<br />
-insmod ./rmc.ko mynid=0 page_cnt_log2=16<br />
+insmod ./rmc.ko mynid=0<br />
 #server 1<br />
-insmod ./rmc.ko mynid=1 page_cnt_log2=16<br />
+insmod ./rmc.ko mynid=1<br />
 <br />
 
 ### run RMC daemon
@@ -39,3 +39,8 @@ taskset -c 0 ./bench_async 1 r<br />
 #sever 0 (write remote memory asynchronously)<br />
 taskset -c 0 ./bench_async 1 w<br />
 <br />
+
+### Sonuma-vm limitations
+This platform trades flexibility for performance. In particular, a Scale-Out NUMA application is bound to a single global address space, which is sufficient for the majority of use cases. Also, the size
+of the context is fixed by the RMC daemon and the kernel driver. One could try to increase the context size (these are just constants), but it is not guaranteed that the Xen hypervisor will grant access
+to all the pages.

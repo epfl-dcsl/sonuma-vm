@@ -79,8 +79,8 @@ module_param(mynid, int, 0);
 unsigned long apps_mem;
 
 //number of pages to allocate/map
-static int page_cnt_log2 = 4;
-module_param(page_cnt_log2, int, 0);
+//static int page_cnt_log2 = 4;
+//module_param(page_cnt_log2, int, 0);
 
 static int shm_open(struct inode *inode, struct file *filp);
 static int shm_release(struct inode *inode, struct file *filp);
@@ -256,8 +256,8 @@ static int __init rmc_init(void)
     int rc = 0;
     int ret;
     
-    printk(KERN_CRIT "[sonuma_drv] this node's ID is %u\n", mynid);
-    printk(KERN_CRIT "[sonuma_drv] page_cnt_log2 is %u\n", page_cnt_log2);
+    //printk(KERN_CRIT "[sonuma_drv] this node's ID is %u\n", mynid);
+    //printk(KERN_CRIT "[sonuma_drv] page_cnt_log2 is %u\n", page_cnt_log2);
 
     mr_init();
     
