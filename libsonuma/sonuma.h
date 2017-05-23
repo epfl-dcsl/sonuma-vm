@@ -80,30 +80,30 @@ extern "C" {
 int kal_open(char *kal_name);
 
 /**
- * This func registers WQ with KAL or Flexus.
+ * This func registers WQ with KAL.
  * Warning: it allocates memory for WQ and pins the memory
- *          to avoid swapping to the disk (pins only for Flexus)
+ *          to avoid swapping to the disk.
  */
 int kal_reg_wq(int fd, rmc_wq_t **wq_ptr);
 
 /**
- * This func registers CQ with KAL or Flexus.
+ * This func registers CQ with KAL.
  * Warning: it allocates memory for WQ and pins the memory
- *          to avoid swapping to the disk (pins only for Flexus)
+ *          to avoid swapping to the disk.
  */
 int kal_reg_cq(int fd, rmc_cq_t **cq_ptr);
 
 /**
- * This func registers local buffer with KAL or Flexus.
+ * This func registers local buffer with KAL.
  * Warning: the func pins the memory to avoid swapping to
- *          the disk (only for Flexus); allocation is done within an app
+ *          the disk.
  */
 int kal_reg_lbuff(int fd, uint8_t **buff_ptr, uint32_t num_pages);
 
 /**
- * This func registers context buffer with KAL or Flexus.
+ * This func registers context buffer with KAL.
  * Warning: the func pins the memory to avoid swapping to
- *          the disk (only for Flexus); allocation is done within an app
+ *          the disk.
  */
 int kal_reg_ctx(int fd, uint8_t **ctx_ptr, uint32_t num_pages);
 
@@ -127,7 +127,7 @@ int rmc_recv(rmc_wq_t *wq, rmc_cq_t *cq, char *ctx, char *lbuff_ptr,
 //inline methods
 
 static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_base,
-				  uint64_t lbuff_slot, int snid, uint32_t ctx_id,
+				  uint64_t lbuff_offset, int snid, uint32_t ctx_id,
 				  uint64_t ctx_offset, uint64_t length)
 {
   uint8_t wq_head = wq->head;
@@ -137,7 +137,7 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_bas
 
   while (wq->q[wq_head].valid) {} // wait for WQ head to be ready
   
-  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].buf_addr = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -176,7 +176,7 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_bas
 }
 
 static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_base,
-				   uint64_t lbuff_slot, int snid, uint32_t ctx_id,
+				   uint64_t lbuff_offset, int snid, uint32_t ctx_id,
 				   uint64_t ctx_offset, uint64_t length)
 {
   uint8_t wq_head = wq->head;
@@ -186,7 +186,7 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_ba
   
   DLogPerf("[sonuma] rmc_rwrite_sync called in VM mode.");
   
-  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].buf_addr = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -224,14 +224,14 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_ba
 }
 
 //CAUTION: make sure you call rmc_check_cq() before this function
-static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_slot,
+static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_offset,
 				   int snid, uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
   DLogPerf("[sonuma] rmc_rread_async called in VM mode.");
   
   uint8_t wq_head = wq->head;
  
-  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].buf_addr = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -254,7 +254,7 @@ static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t l
 }
 
 //CAUTION: make sure you call rmc_check_cq() before this function
-static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_slot,
+static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_offset,
 				    int snid, uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
   
@@ -262,7 +262,7 @@ static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t 
   
   uint8_t wq_head = wq->head;
  
-  wq->q[wq_head].buf_addr = lbuff_slot;
+  wq->q[wq_head].buf_addr = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
