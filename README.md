@@ -11,35 +11,43 @@ Sonuma-vm is envisioned to be a software development platform that is capable of
 
 ## Setup instructions:
 ```
-export LIBSONUMA_PATH="path to libsonuma"<br/>
-make (output in ./bin)<br/> 
+export LIBSONUMA_PATH=<path to libsonuma>
+make
 ```
 
-<br />
-#server 0<br />
-insmod ./rmc.ko mynid=0<br />
-#server 1<br />
-insmod ./rmc.ko mynid=1<br />
-<br />
+Enable remote memory mappings:
+```
+insmod ./rmc.ko mynid=0
+insmod ./rmc.ko mynid=1
+```
 
-#server 0<br />
-taskset -c 1 ./rmcd 2 0 &<br />
-#server 1<br />
-taskset -c 1 ./rmcd 2 1 &<br />
-<br />
+Run RCM daemons:
+```
+taskset -c 1 ./rmcd 2 0 &
+taskset -c 1 ./rmcd 2 1 &
+```
 
-## Micro-benchmarks: read/write from remote memory using sync/async operations:
-#server 1 (write values to the context)<br />
-taskset -c 0 ./bench_server<br />
-#server 0 (read values from the memory of server 1<br />
-taskset -c 0 ./bench_sync 1 r<br />
-#server 0 (zero out the memory of server 1, read again to check)<br />
-taskset -c 0 ./bench_sync 1 w<br />
-#sever 0 (read from remote memory asynchronously)<br />
-taskset -c 0 ./bench_async 1 r<br />
-#sever 0 (write remote memory asynchronously)<br />
-taskset -c 0 ./bench_async 1 w<br />
-<br />
+## Micro-benchmarks: read/write remote memory using sync/async ops
+server 1: write values to the context:
+```
+taskset -c 0 ./bench_server
+```
+server 0: read values from the memory of server 1
+```
+taskset -c 0 ./bench_sync 1 r
+```
+server 0: zero out the memory of server 1, read again to check
+```
+taskset -c 0 ./bench_sync 1 w
+```
+sever 0: read from remote memory asynchronously
+```
+taskset -c 0 ./bench_async 1 r
+```
+server 0: write remote memory asynchronously
+```
+taskset -c 0 ./bench_async 1 w
+```
 
 ### sonuma-vm limitations:
 This platform trades flexibility for performance. In particular, a Scale-Out NUMA application is bound to a single global address space, which is sufficient for the majority of use cases. Also, the size
