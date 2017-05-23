@@ -52,6 +52,8 @@
 
 #include "RMCdefines.h"
 
+#define RMC_DEV "/dev/rmc"
+
 #ifdef DEBUG
 #define DLog(M, ...) fprintf(stdout, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
@@ -65,6 +67,8 @@
 #endif
 
 typedef void (async_handler)(uint8_t tid, wq_entry_t *head, void *owner);
+
+//static uint8_t *local_buffer;
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,13 +126,16 @@ int rmc_recv(rmc_wq_t *wq, rmc_cq_t *cq, char *ctx, char *lbuff_ptr,
 
 //inline methods
 
-static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
-				  uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_base,
+				  uint64_t lbuff_slot, int snid, uint32_t ctx_id,
+				  uint64_t ctx_offset, uint64_t length)
 {
   uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
   
   DLogPerf("[rmc_rread_sync] rmc_rread_sync called.");
+
+  while (wq->q[wq_head].valid) {} // wait for WQ head to be ready
   
   wq->q[wq_head].buf_addr = lbuff_slot;
   wq->q[wq_head].cid = ctx_id;
@@ -168,8 +175,9 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slo
 
 }
 
-static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_slot, int snid,
-				   uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_base,
+				   uint64_t lbuff_slot, int snid, uint32_t ctx_id,
+				   uint64_t ctx_offset, uint64_t length)
 {
   uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
@@ -187,11 +195,12 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_sl
     wq->q[wq_head].length = length; //specify the length of the transfer
   wq->q[wq_head].op = 'w';
   wq->q[wq_head].nid = snid;
-  //soNUMA v2.1
+
   wq->q[wq_head].valid = 1;
   wq->q[wq_head].SR = wq->SR;
   
   wq->head =  wq->head + 1;
+
   // check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
     wq->head = 0;
@@ -215,8 +224,8 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint64_t lbuff_sl
 }
 
 //CAUTION: make sure you call rmc_check_cq() before this function
-static inline void rmc_rread_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
-				   uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_slot,
+				   int snid, uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
   DLogPerf("[sonuma] rmc_rread_async called in VM mode.");
   
@@ -245,8 +254,8 @@ static inline void rmc_rread_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
 }
 
 //CAUTION: make sure you call rmc_check_cq() before this function
-static inline void rmc_rwrite_async(rmc_wq_t *wq, uint64_t lbuff_slot, int snid,
-				    uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
+static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t lbuff_slot,
+				    int snid, uint32_t ctx_id, uint64_t ctx_offset, uint64_t length)
 {
   
   DLogPerf("[sonuma] rmc_rwrite_async called in VM mode.");

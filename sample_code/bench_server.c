@@ -43,22 +43,15 @@
 
 int main(int argc, char **argv)
 {
-  if (argc != 2) {
-    fprintf(stdout,"Usage: ./bench_server <context_size>\n");
-    return 1;
-  }
+  uint64_t ctx_size = PAGE_SIZE * PAGE_SIZE; 
   
-  uint64_t ctx_size = atoi(argv[1]);
-  
-  //uint8_t *lbuff = NULL;
   uint8_t *ctx = NULL;
   
-  //local buffer
-  /*
-  kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
-  fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
-	  lbuff, buf_size/PAGE_SIZE);
-  */
+  int fd = kal_open((char*)RMC_DEV);  
+  if(fd < 0) {
+    printf("cannot open RMC dev. driver\n");
+    return -1;
+  }
   
   //context
   kal_reg_ctx(0, &ctx, ctx_size/PAGE_SIZE);

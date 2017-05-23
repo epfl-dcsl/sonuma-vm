@@ -41,21 +41,21 @@
 
 #include "sonuma.h"
 
-#define ITERS           4096
+#define ITERS 4096
 #define BILLION 1000000000
 
-#define SLOT_SIZE       64
-#define OBJ_READ_SIZE   64
+#define SLOT_SIZE 64
+#define OBJ_READ_SIZE 64
 
-#define CTX_0           0
+#define CTX_0 0
 
-//#define USE_TIMER
+#define CPU_FREQ 2.4
 
 using namespace std;
 
-static __inline__ unsigned long long rdtsc(void) {
+static __inline__ unsigned long long rdtsc(void)
+{
   unsigned long hi, lo;
-  __asm__ __volatile__ ("xorl %%eax,%%eax\ncpuid" ::: "%rax", "%rbx", "%rcx", "%rdx");
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
   return ((unsigned long long)lo) | (((unsigned long long)hi)<<32) ;
 }
@@ -67,36 +67,59 @@ int main(int argc, char **argv)
 
   int num_iter = (int)ITERS;
 
-  if (argc != 5) {
-    fprintf(stdout,"Usage: ./bench_sync <target_nid> <context_size> <buffer_size>\n");
+  if (argc != 3) {
+    fprintf(stdout,"Usage: ./bench_sync <target_nid> <op_type>\n"); 
     return 1;
   }
     
   int snid = atoi(argv[1]);
-  uint64_t ctx_size = atoi(argv[2]);
-  uint64_t buf_size = atoi(argv[3]);
-  char op = *argv[4];
+  char op = *argv[2];
+  uint64_t ctx_size = PAGE_SIZE * PAGE_SIZE;
+  uint64_t buf_size = PAGE_SIZE;
 
+  uint8_t *ctx = NULL;
   uint8_t *lbuff = NULL;
-  uint8_t *ctx;
   uint64_t lbuff_slot;
   uint64_t ctx_offset;
+  
+  int fd = kal_open((char*)RMC_DEV);  
+  if(fd < 0) {
+    printf("cannot open RMC dev. driver\n");
+    return -1;
+  }
 
-  //local buffer
-  kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
-  fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
-	  lbuff, buf_size/PAGE_SIZE);
+  //register local buffer
+  if(kal_reg_lbuff(fd, &lbuff, buf_size/PAGE_SIZE) < 0) {
+    printf("Failed to allocate local buffer\n");
+    return -1;
+  } else {
+    fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
+	    lbuff, buf_size/PAGE_SIZE);
+  }
 
-  //context
-  kal_reg_ctx(0, &ctx, ctx_size/PAGE_SIZE);
-  fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
-	  ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
+  //register context
+  if(kal_reg_ctx(fd, &ctx, ctx_size/PAGE_SIZE) < 0) {
+    printf("Failed to allocate context\n");
+    return -1;
+  } else {
+    fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
+	    ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
+  }
 
-  kal_reg_wq(0, &wq);
-  fprintf(stdout, "WQ was registered.\n");
+  //register WQ
+  if(kal_reg_wq(fd, &wq) < 0) {
+    printf("Failed to register WQ\n");
+    return -1;
+  } else {
+    fprintf(stdout, "WQ was registered.\n");
+  }
 
-  kal_reg_cq(0, &cq);
-  fprintf(stdout, "CQ was registered.\n");
+  //register CQ
+  if(kal_reg_cq(fd, &cq) < 0) {
+    printf("Failed to register CQ\n");
+  } else {
+    fprintf(stdout, "CQ was registered.\n");
+  }
   
   fprintf(stdout,"Init done! Will execute %d WQ operations - SYNC! (snid = %d)\n",
 	  num_iter, snid);
@@ -112,8 +135,8 @@ int main(int argc, char **argv)
   lbuff_slot = 0;
   
   for(size_t i = 0; i < num_iter; i++) {
-    ctx_offset = (i * PAGE_SIZE) % ctx_size; // - PAGE_SIZE);
-
+    ctx_offset = (i * PAGE_SIZE) % ctx_size;
+    lbuff_slot = (i * sizeof(uint32_t)) % (PAGE_SIZE - OBJ_READ_SIZE);
 #ifdef USE_TIMER
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 #else
@@ -121,9 +144,9 @@ int main(int argc, char **argv)
 #endif
 
     if(op == 'r') {
-      rmc_rread_sync(wq, cq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
+      rmc_rread_sync(wq, cq, lbuff, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else if(op == 'w') {
-      rmc_rwrite_sync(wq, cq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
+      rmc_rwrite_sync(wq, cq, lbuff, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else
       ;
     
@@ -144,16 +167,17 @@ int main(int argc, char **argv)
       sort(stimes.begin(), stimes.end());
       for(int i=0; i<100; i++)
 	sum += stimes[i];
-      printf("[hophashtable_asy] min latency: %u ns; median latency: %u ns; 99th latency: %u ns; avg latency: %u ns\n", stimes[0], stimes[50], stimes[99], sum/100);
+      printf("[hophashtable_asy] min: %u ns; median: %u ns; 99th: %u ns; avg latency: %u ns\n",
+	     stimes[0], stimes[50], stimes[99], sum/100);
       
-      while (!stimes.empty())
+      while(!stimes.empty())
 	stimes.pop_back();
     }
 #else
     if(op == 'r') {
-      printf("read this number: %u\n", ((uint32_t*)lbuff)[lbuff_slot]);
+      printf("read this number: %u\n", ((uint32_t*)lbuff)[lbuff_slot/sizeof(uint32_t)]);
     }
-    printf("time to execute this op: %lf ns\n", ((double)end - start)/2.4);
+    printf("time to execute this op: %lf ns\n", ((double)end - start)/CPU_FREQ);
 #endif
   }
  

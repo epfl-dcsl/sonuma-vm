@@ -66,41 +66,61 @@ int main(int argc, char **argv)
   rmc_cq_t *cq;
 
   int num_iter = (int)ITERS;
-  
-  if (argc != 5) {
-    fprintf(stdout,"Usage: ./bench_sync <target_nid> <context_size> <buffer_size>\n");
+
+  if (argc != 3) {
+    fprintf(stdout,"Usage: ./bench_sync <target_nid> <op_type>\n"); 
     return 1;
   }
     
   int snid = atoi(argv[1]);
-  uint64_t ctx_size = atoi(argv[2]);
-  uint64_t buf_size = atoi(argv[3]);
-  char op = *argv[4];
+  char op = *argv[2];
+  uint64_t ctx_size = PAGE_SIZE * PAGE_SIZE;
+  uint64_t buf_size = PAGE_SIZE;
 
-
-  uint8_t *ctx;
+  uint8_t *ctx = NULL;
   uint64_t lbuff_slot;
   uint64_t ctx_offset;
 
   lbuff = NULL;
-
+  
+  int fd = kal_open((char*)RMC_DEV);  
+  if(fd < 0) {
+    printf("cannot open RMC dev. driver\n");
+    return -1;
+  }
+  
   op_cnt = (int)ITERS;
   
   //local buffer
-  kal_reg_lbuff(0, &lbuff, buf_size/PAGE_SIZE);
-  fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
-	  lbuff, buf_size/PAGE_SIZE);
+  if(kal_reg_lbuff(fd, &lbuff, buf_size/PAGE_SIZE) < 0) {
+    printf("Failed to allocate local buffer\n");
+    return -1;
+  } else {
+    fprintf(stdout, "Local buffer was mapped to address %p, number of pages is %d\n",
+	    lbuff, buf_size/PAGE_SIZE);
+  }
 
   //context
-  kal_reg_ctx(0, &ctx, ctx_size/PAGE_SIZE);
-  fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
-	  ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
+  if(kal_reg_ctx(fd, &ctx, ctx_size/PAGE_SIZE) < 0) {
+    printf("Failed to allocate context\n");
+    return -1;
+  } else {
+    fprintf(stdout, "Ctx buffer was registered, ctx_size=%d, %d pages.\n",
+	    ctx_size, ctx_size*sizeof(uint8_t) / PAGE_SIZE);
+  }
+  
+  if(kal_reg_wq(fd, &wq) < 0) {
+    printf("Failed to register WQ\n");
+    return -1;
+  } else {
+    fprintf(stdout, "WQ was registered.\n");
+  }
 
-  kal_reg_wq(0, &wq);
-  fprintf(stdout, "WQ was registered.\n");
-
-  kal_reg_cq(0, &cq);
-  fprintf(stdout, "CQ was registered.\n");
+  if(kal_reg_cq(fd, &cq) < 0) {
+    printf("Failed to register CQ\n");
+  } else {
+    fprintf(stdout, "CQ was registered.\n");
+  }
   
   fprintf(stdout,"Init done! Will execute %d WQ operations - SYNC! (snid = %d)\n",
 	  num_iter, snid);
@@ -117,9 +137,9 @@ int main(int argc, char **argv)
     rmc_check_cq(wq, cq, &handler, NULL);            
 
     if(op == 'r') {
-      rmc_rread_async(wq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
+      rmc_rread_async(wq, lbuff, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else if(op == 'w') {
-      rmc_rwrite_async(wq, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
+      rmc_rwrite_async(wq, lbuff, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
     } else
       ;
   }

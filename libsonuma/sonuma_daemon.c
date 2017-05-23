@@ -50,12 +50,8 @@
 
 int kal_open(char *kal_name)
 {  
-    int fd;
-
-    if((fd=open(kal_name, O_RDWR|O_SYNC)) < 0) {
-        return -1;
-    }
-    return fd;
+  //nothing to do
+  return 0;
 }
 
 int kal_reg_wq(int fd, rmc_wq_t **wq_ptr)
