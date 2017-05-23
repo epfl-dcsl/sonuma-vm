@@ -29,13 +29,13 @@ taskset -c 1 ./rmcd 2 1 &<br />
 
 ### read/write from remote memory using sync/async operations
 #server 1 (write values to the context)<br />
-taskset -c 0 ./bench_server 16777216<br />
+taskset -c 0 ./bench_server<br />
 #server 0 (read values from the memory of server 1<br />
-taskset -c 0 ./bench_sync 1 16777216 4096 r<br />
+taskset -c 0 ./bench_sync 1 r<br />
 #server 0 (zero out the memory of server 1, read again to check)<br />
-taskset -c 0 ./bench_sync 1 16777216 4096 w<br />
+taskset -c 0 ./bench_sync 1 w<br />
 #sever 0 (read from remote memory asynchronously)<br />
-taskset -c 0 ./bench_async 1 16777216 4096 r<br />
+taskset -c 0 ./bench_async 1 r<br />
 #sever 0 (write remote memory asynchronously)<br />
-taskset -c 0 ./bench_async 1 16777216 4096 w<br />
+taskset -c 0 ./bench_async 1 w<br />
 <br />
