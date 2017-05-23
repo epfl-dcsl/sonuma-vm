@@ -1,14 +1,12 @@
 # sonuma-vm
 Sonuma-vm is an all-software, proof-of-concept implementation of Scale-Out NUMA, a high-performance rack-scale system for in-memory data processing. Scale-Out NUMA layers a one-sided (RDMA-like) protocol for explicit access to remote memory (with copy semantics) in lieu of a cache-coherence protocol on top of the NUMA's cache-block request/reply transpors. A specialized on-chip hardware block called remote memory controller (RMC) implementes the basic one-sided primitives (e.g., remote read/write). Sonuma-vm is envisioned to be a software development platform that is capable of running Scale-Out NUMA applications at native machine speed and that can approximate the remote access latency of an actual hardware RMC.
 
-Sonuma-vm emulates a non-coherent NUMA machine with explicit, one-sided access to remote memory (i.e., Scale-Out NUMA) by combining a fully-coherent NUMA machine (ccNUMA) and a virtual machine monitor (hypervisor). Sonuma-vm emulates a multi-node Scale-Out NUMA system using a set of virtual machines (VM) mapped (VCPU, page frames) to distinct NUMA domains of a giant ccNUMA machine. Sonuma-vm leverages the Xen hypervisor to enable access to remote memory (i.e., the memory of other NUMA domains). The RMC is implemented in software and runs on a dedicated VCPU in each VM. Sonuma-vm uses hardware virtualization (CPU and IO) to minimize the overhead of emulation. This platform comes with a library providing the Scale-Out NUMA API from our ASPLOS'14 paper. 
+Sonuma-vm emulates a non-coherent NUMA machine with explicit, one-sided access to remote memory (i.e., Scale-Out NUMA) by combining a fully-coherent NUMA machine (ccNUMA) and a virtual machine monitor (hypervisor). Sonuma-vm emulates a multi-node Scale-Out NUMA system using a set of virtual machines (VM) mapped (VCPU, page frames) to distinct NUMA domains of a giant ccNUMA machine. Sonuma-vm leverages the Xen hypervisor to enable access to remote memory, across different NUMA domains. The RMC is implemented in software and runs on a dedicated VCPU in each VM. Sonuma-vm can be used with hardware virtualization enabled (CPU and IO) to minimize the overhead of emulation. This platform comes with a library exposing the Scale-Out NUMA API from our ASPLOS'14 paper. 
 
 ### compile:
 export LIBSONUMA_PATH="path to libsonuma"<br/>
 make (output in ./bin)<br/> 
-<br />
-### clean:
-make clean<br/>
+
 <br />
 ### insert kernel driver to map remote regions:
 #server 0<br />
