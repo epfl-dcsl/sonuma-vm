@@ -42,7 +42,6 @@
 #include <xen/balloon.h>
 #include <xen/page.h>
 #include <xen/events.h>
-//
 
 #include "debug.h"
 #include "main.h"
@@ -64,7 +63,7 @@ struct memory_region {
 };
 typedef struct memory_region memory_region_t;
 
-mr_reference_info_t *create_mr_reference(unsigned long mem, domid_t remote_domid); //memory_region_t *mr, domid_t remote_domid);
+mr_reference_info_t *create_mr_reference(unsigned long mem, domid_t remote_domid);
 void destroy_mr_reference(mr_reference_info_t *ref);
 memory_region_t *mr_create(unsigned int page_count);
 int mr_destroy(memory_region_t * mr);
