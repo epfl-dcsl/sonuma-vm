@@ -75,10 +75,6 @@ module_param(mynid, int, 0);
 
 unsigned long apps_mem;
 
-//number of pages to allocate/map
-//static int page_cnt_log2 = 4;
-//module_param(page_cnt_log2, int, 0);
-
 static int shm_open(struct inode *inode, struct file *filp);
 static int shm_release(struct inode *inode, struct file *filp);
 static int shm_mmap(struct file *filp, struct vm_area_struct *vma);
@@ -174,7 +170,7 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	printk(KERN_CRIT "[ioctl] shm_ioctl: domid = %d, nid = %d, gref = %d\n",
 	       current_entry->domid, current_entry->nid, current_entry->gref);
 	if(current_entry == NULL) {
-	    printk(KERN_CRIT "[sonuma_drv] domain not found\n");
+	    printk(KERN_CRIT "[ioctl] domain not found\n");
 	    return -1;
 	}
     }
@@ -191,9 +187,9 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
     
     //map the physically contiguous memory area into the caller's address space
     if(current_entry != NULL) {
-      printk(KERN_CRIT "[sonuma_drv] shm_mmap: mapping remote memory region\n");
+      printk(KERN_CRIT "[shm_mmap] shm_mmap: mapping remote memory region\n");
       //memory map granted page directly to the user
-      printk(KERN_CRIT "[sonuma_drv] shm_mmap: domid = %d, nid = %d, gref = %d\n",
+      printk(KERN_CRIT "[shm_mmap] shm_mmap: domid = %d, nid = %d, gref = %d\n",
 	     current_entry->domid, current_entry->nid, current_entry->gref);
       
       ret = mr_map(current_entry->domid, current_entry->gref, 0, current_entry, vma);
@@ -214,13 +210,13 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
 
 static int shm_open(struct inode *inode, struct file *filp)
 {
-  printk(KERN_CRIT "[sonuma_drv] shm_open\n");
+  printk(KERN_CRIT "[shm_open] shm_open\n");
     return 0;
 }
 
 static int shm_release(struct inode *inode, struct file *filp)
 {
-    printk(KERN_CRIT "[sonuma_drv] shm_release\n");
+    printk(KERN_CRIT "[shm_release] shm_release\n");
     return 0;
 }
 
@@ -232,10 +228,10 @@ static void __exit rmc_exit(void)
     
     //release resources
     for(i=0;i<num_of_doms;i++) {
-	printk(KERN_CRIT "[sonuma_drv] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
+	printk(KERN_CRIT "[rmc_exit] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
 	if(i != mynid) {
 	  Entry *e = &rdomh[i];
-	  printk(KERN_CRIT "[sonuma_drv] rmc_exit: releasing mr references\n");
+	  printk(KERN_CRIT "[rmc_exit] rmc_exit: releasing mr references\n");
 	  if(e != NULL)
 	    destroy_mr_reference((mr_reference_info_t *)e->mr_info);
 	}
@@ -252,22 +248,19 @@ static int __init rmc_init(void)
 {
     int rc = 0;
     int ret;
-    
-    //printk(KERN_CRIT "[sonuma_drv] this node's ID is %u\n", mynid);
-    //printk(KERN_CRIT "[sonuma_drv] page_cnt_log2 is %u\n", page_cnt_log2);
 
     mr_init();
     
     //register device
     if ((ret = alloc_chrdev_region(&mmap_dev, 0, 1, "mmap")) < 0) {
-	printk(KERN_ERR "[sonuma_drv] could not allocate major number for mmap\n");
+	printk(KERN_ERR "[rmc_init] could not allocate major number for mmap\n");
 	goto out;
     }
     
     //initialize the device structure and register the device with the kernel
     cdev_init(&mmap_cdev, &shmmap_fops);
     if ((ret = cdev_add(&mmap_cdev, mmap_dev, 1)) < 0) {
-	printk(KERN_ERR "[sonuma_drv] could not allocate chrdev for mmap\n");
+	printk(KERN_ERR "[rmc_init] could not allocate chrdev for mmap\n");
     }
     
     return ret;
