@@ -31,9 +31,6 @@
 
 /*
  *  Remote read test for libsonuma and SoftRMC
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <vector>
@@ -42,21 +39,15 @@
 #include "sonuma.h"
 
 #define ITERS 4096
-#define BILLION 1000000000
-
-#define SLOT_SIZE 64
 #define OBJ_READ_SIZE 64
-
 #define CTX_0 0
 
-using namespace std;
-
-static uint8_t *lbuff;
 static uint32_t op_cnt;
 
 void handler(uint8_t tid, wq_entry_t *head, void *owner) {
-  printf("[handler] buffer offset for this WQ entry: %u\n", head->buf_addr);
-  printf("[handler] read this number: %u\n", ((uint32_t*)lbuff)[head->buf_addr/sizeof(uint32_t)]);
+  printf("[handler] buffer offset for this WQ entry: %u\n", head->buf_offset);
+  printf("[handler] read this number from remote memory: %u\n",
+	 ((uint32_t*)head->buf_addr)[head->buf_offset/sizeof(uint32_t)]);
   op_cnt--;
 }
 
@@ -78,11 +69,10 @@ int main(int argc, char **argv)
   uint64_t buf_size = PAGE_SIZE;
 
   uint8_t *ctx = NULL;
+  uint8_t *lbuff = NULL;
   uint64_t lbuff_slot;
   uint64_t ctx_offset;
 
-  lbuff = NULL;
-  
   int fd = kal_open((char*)RMC_DEV);  
   if(fd < 0) {
     printf("cannot open RMC dev. driver\n");

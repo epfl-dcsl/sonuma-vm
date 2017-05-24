@@ -72,6 +72,9 @@ int alloc_wq(rmc_wq_t **qp_wq)
 	   shmid);
     *qp_wq = (rmc_wq_t *)shmat(shmid, NULL, 0);
 
+    printf("[alloc_wq] shmat completed\n");
+
+
     f = fopen("wq_ref.txt", "w");
     fprintf(f, "%d", shmid);
     fclose(f);
@@ -82,13 +85,16 @@ int alloc_wq(rmc_wq_t **qp_wq)
   rmc_wq_t *wq = *qp_wq; 
   
   if (wq == NULL) {
-    DLog("[alloc_wq] Work Queue could not be allocated.");
+    printf("[alloc_wq] Work Queue could not be allocated.");
     return -1;
   }
   
   //initialize wq memory
+  printf("size of rmc_wq_t: %u\n", sizeof(rmc_wq_t));
   memset(wq, 0, sizeof(rmc_wq_t));
-    
+
+  printf("[alloc_wq] memset the WQ memory\n");
+  
   retcode = mlock((void *)wq, PAGE_SIZE);
   if(retcode != 0) {
     DLog("[alloc_wq] WQueue mlock returned %d", retcode);
@@ -563,12 +569,12 @@ int main(int argc, char **argv)
       curr = &(wq->q[local_wq_tail]);
       
       if(curr->op == 'r') {
-	memcpy((uint8_t *)(local_buffer + curr->buf_addr),
+	memcpy((uint8_t *)(local_buffer + curr->buf_offset),
 	       ctx[curr->nid] + curr->offset,
 	       curr->length);
       } else {
 	memcpy(ctx[curr->nid] + curr->offset,
-	       (uint8_t *)(local_buffer + curr->buf_addr),
+	       (uint8_t *)(local_buffer + curr->buf_offset),
 	       curr->length);	
       }
 

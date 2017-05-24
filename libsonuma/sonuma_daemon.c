@@ -43,8 +43,6 @@
 
 #include "sonuma.h"
 
-#define BILLION 1000000000
-
 int kal_open(char *kal_name)
 {  
   //nothing to do

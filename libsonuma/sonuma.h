@@ -129,9 +129,10 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_bas
   
   DLogPerf("[rmc_rread_sync] rmc_rread_sync called.");
 
-  while (wq->q[wq_head].valid) {} // wait for WQ head to be ready
-  
-  wq->q[wq_head].buf_addr = lbuff_offset;
+  while (wq->q[wq_head].valid) {} //wait for WQ head to be ready
+
+  wq->q[wq_head].buf_addr = (uint64_t)lbuff_base;
+  wq->q[wq_head].buf_offset = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -146,22 +147,22 @@ static inline void rmc_rread_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_bas
 
   wq->head =  wq->head + 1;
 
-  // check if WQ reached its end
+  //check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
     wq->head = 0;
     wq->SR ^= 1;
   }
   
-  // wait for a completion of the entry
+  //wait for a completion of the entry
   while(cq->q[cq_tail].SR != cq->SR) {
   }
   
-  // mark the entry as invalid, i.e. completed
+  //mark the entry as invalid, i.e. completed
   wq->q[cq->q[cq_tail].tid].valid = 0;
   
   cq->tail = cq->tail + 1;
 
-  // check if WQ reached its end
+  //check if WQ reached its end
   if (cq->tail >= MAX_NUM_WQ) {
     cq->tail = 0;
     cq->SR ^= 1;
@@ -178,8 +179,9 @@ static inline void rmc_rwrite_sync(rmc_wq_t *wq, rmc_cq_t *cq, uint8_t *lbuff_ba
   while (wq->q[wq_head].valid) {} //wait for WQ head to be ready
   
   DLogPerf("[sonuma] rmc_rwrite_sync called.");
-  
-  wq->q[wq_head].buf_addr = lbuff_offset;
+
+  wq->q[wq_head].buf_addr = (uint64_t)lbuff_base;
+  wq->q[wq_head].buf_offset = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -223,8 +225,9 @@ static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t l
   DLogPerf("[sonuma] rmc_rread_async called.");
   
   uint8_t wq_head = wq->head;
- 
-  wq->q[wq_head].buf_addr = lbuff_offset;
+  
+  wq->q[wq_head].buf_addr = (uint64_t)lbuff_base;
+  wq->q[wq_head].buf_offset = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -239,7 +242,7 @@ static inline void rmc_rread_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t l
   
   wq->head =  wq->head + 1;
   
-  // check if WQ reached its end
+  //check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
     wq->head = 0;
     wq->SR ^= 1;
@@ -253,8 +256,9 @@ static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t 
   DLogPerf("[sonuma] rmc_rwrite_async called.");
   
   uint8_t wq_head = wq->head;
- 
-  wq->q[wq_head].buf_addr = lbuff_offset;
+
+  wq->q[wq_head].buf_addr = (uint64_t)lbuff_base;
+  wq->q[wq_head].buf_offset = lbuff_offset;
   wq->q[wq_head].cid = ctx_id;
   wq->q[wq_head].offset = ctx_offset;
   if(length < 64)
@@ -269,7 +273,7 @@ static inline void rmc_rwrite_async(rmc_wq_t *wq, uint8_t *lbuff_base, uint64_t 
 
   wq->head =  wq->head + 1;
   
-  // check if WQ reached its end
+  //check if WQ reached its end
   if (wq->head >= MAX_NUM_WQ) {
       wq->head = 0;
       wq->SR ^= 1;
@@ -282,16 +286,16 @@ static inline int rmc_check_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handle
   uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
 
-  // in the outer loop we wait for a free entry in the WQ head
+  //in the outer loop we wait for a free entry in the WQ head
   do { 
-    // in the inner loop we iterate over completed entries in the CQ
+    //in the inner loop we iterate over completed entries in the CQ
     while (cq->q[cq_tail].SR == cq->SR) {
       tid = cq->q[cq_tail].tid;
       wq->q[tid].valid = 0;
       
       cq->tail = cq->tail + 1;
 
-      // check if WQ reached its end
+      //check if WQ reached its end
       if (cq->tail >= MAX_NUM_WQ) {
 	cq->tail = 0;
 	cq->SR ^= 1;

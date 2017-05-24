@@ -31,9 +31,6 @@
 
 /*
  *  Remote read test for libsonuma and SoftRMC
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <vector>
@@ -42,13 +39,9 @@
 #include "sonuma.h"
 
 #define ITERS 4096
-#define BILLION 1000000000
-
 #define SLOT_SIZE 64
 #define OBJ_READ_SIZE 64
-
 #define CTX_0 0
-
 #define CPU_FREQ 2.4
 
 using namespace std;
@@ -124,24 +117,15 @@ int main(int argc, char **argv)
   fprintf(stdout,"Init done! Will execute %d WQ operations - SYNC! (snid = %d)\n",
 	  num_iter, snid);
 
-#ifdef USE_TIMER
-  struct timespec start_time, end_time;
-  uint64_t start_time_ns, end_time_ns;
-  vector<uint64_t> stimes;
-#else
   unsigned long long start, end;
-#endif
   
   lbuff_slot = 0;
   
   for(size_t i = 0; i < num_iter; i++) {
     ctx_offset = (i * PAGE_SIZE) % ctx_size;
     lbuff_slot = (i * sizeof(uint32_t)) % (PAGE_SIZE - OBJ_READ_SIZE);
-#ifdef USE_TIMER
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-#else
+
     start = rdtsc();
-#endif
 
     if(op == 'r') {
       rmc_rread_sync(wq, cq, lbuff, lbuff_slot, snid, CTX_0, ctx_offset, OBJ_READ_SIZE);
@@ -150,35 +134,12 @@ int main(int argc, char **argv)
     } else
       ;
     
-#ifdef USE_TIMER
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
-#else
     end = rdtsc();
-#endif
     
-#ifdef USE_TIMER
-    start_time_ns = BILLION * start_time.tv_sec + start_time.tv_nsec;
-    end_time_ns = BILLION * end_time.tv_sec + end_time.tv_nsec;
-    
-    stimes.insert(stimes.begin(), end_time_ns - start_time_ns);
-    
-    if(stimes.size() == 100) {
-      long sum = 0;
-      sort(stimes.begin(), stimes.end());
-      for(int i=0; i<100; i++)
-	sum += stimes[i];
-      printf("[hophashtable_asy] min: %u ns; median: %u ns; 99th: %u ns; avg latency: %u ns\n",
-	     stimes[0], stimes[50], stimes[99], sum/100);
-      
-      while(!stimes.empty())
-	stimes.pop_back();
-    }
-#else
     if(op == 'r') {
       printf("read this number: %u\n", ((uint32_t*)lbuff)[lbuff_slot/sizeof(uint32_t)]);
     }
     printf("time to execute this op: %lf ns\n", ((double)end - start)/CPU_FREQ);
-#endif
   }
  
   return 0;

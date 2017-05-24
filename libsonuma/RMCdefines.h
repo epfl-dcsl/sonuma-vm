@@ -36,7 +36,7 @@
 #ifndef H_RMC_DEFINES
 #define H_RMC_DEFINES
 
-#define MAX_NUM_WQ 100
+#define MAX_NUM_WQ 64
 
 #define KAL_REG_WQ      1
 #define KAL_UNREG_WQ    6
@@ -54,6 +54,7 @@ typedef struct wq_entry {
   //Required for pipelining async ops.
   volatile uint8_t valid;
   uint64_t buf_addr;
+  uint64_t buf_offset;
   uint8_t cid;
   uint16_t nid;
   uint64_t offset;
