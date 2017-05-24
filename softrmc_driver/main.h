@@ -31,9 +31,6 @@
 
 /*
  *  Remote memory driver for Scale-Out NUMA
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #ifndef _MAIN_H_

@@ -45,7 +45,6 @@
 static uint32_t op_cnt;
 
 void handler(uint8_t tid, wq_entry_t *head, void *owner) {
-  printf("[handler] buffer offset for this WQ entry: %u\n", head->buf_offset);
   printf("[handler] read this number from remote memory: %u\n",
 	 ((uint32_t*)head->buf_addr)[head->buf_offset/sizeof(uint32_t)]);
   op_cnt--;

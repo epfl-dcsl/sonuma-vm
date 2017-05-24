@@ -313,7 +313,6 @@ static inline int rmc_check_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handle
 static inline int rmc_drain_cq(rmc_wq_t *wq, rmc_cq_t *cq, async_handler *handler, void *owner)
 {
   uint8_t tid;
-  uint8_t wq_head = wq->head;
   uint8_t cq_tail = cq->tail;
   
   while(cq->q[cq_tail].SR == cq->SR) {

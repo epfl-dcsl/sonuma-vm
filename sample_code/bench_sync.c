@@ -44,8 +44,6 @@
 #define CTX_0 0
 #define CPU_FREQ 2.4
 
-using namespace std;
-
 static __inline__ unsigned long long rdtsc(void)
 {
   unsigned long hi, lo;

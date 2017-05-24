@@ -31,9 +31,6 @@
 
 /*
  *  Remote memory mapper for the Xen hypervisor
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <xen/evtchn.h>

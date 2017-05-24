@@ -31,9 +31,6 @@
 
 /*
  *  Remote read test for libsonuma and SoftRMC
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <vector>

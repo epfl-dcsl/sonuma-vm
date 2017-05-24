@@ -31,9 +31,6 @@
 
 /*
  *  All-software implementation of the RMC
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <stdbool.h>
@@ -200,35 +197,35 @@ int local_buf_alloc(char **mem)
 
 static int rmc_open(char *shm_name)
 {   
-    int fd;
-
-    printf("[rmc_open] open called in VM mode\n");
-    
-    if ((fd=open(shm_name, O_RDWR|O_SYNC)) < 0) {
-        return -1;
-    }
-    
-    return fd;
+  int fd;
+  
+  printf("[rmc_open] open called in VM mode\n");
+  
+  if ((fd=open(shm_name, O_RDWR|O_SYNC)) < 0) {
+    return -1;
+  }
+  
+  return fd;
 }
 
 static int soft_rmc_ctx_destroy()
 {
-    int i;
-
-    ioctl_info_t info;
-
-    info.op = RUNMAP;
-    for(i=0; i<node_cnt; i++) {
-	if(i != this_nid) {
-	    info.node_id = i;
-	    if(ioctl(fd, 0, (void *)&info) == -1) {
-		printf("[soft_rmc_ctx_destroy] failed to unmap a remote region\n");
-		return -1;
-	    }
-	}
+  int i;
+  
+  ioctl_info_t info;
+  
+  info.op = RUNMAP;
+  for(i=0; i<node_cnt; i++) {
+    if(i != this_nid) {
+      info.node_id = i;
+      if(ioctl(fd, 0, (void *)&info) == -1) {
+	printf("[soft_rmc_ctx_destroy] failed to unmap a remote region\n");
+	return -1;
+      }
     }
-    
-    return 0;
+  }
+  
+  return 0;
 }
 
 static int net_init(int node_cnt, int this_nid, char *filename)

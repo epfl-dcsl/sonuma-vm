@@ -31,9 +31,6 @@
 
 /*
  *  All-software implementation of the RMC
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #ifndef SOFT_RMC_H
@@ -61,7 +58,7 @@
 #define IP_LEN 16
 #define PORT 7000
 
-#define MAX_NODE_CNT 24
+#define MAX_NODE_CNT 16
 
 // this has to be aligned with VMM's MAX
 #define MAX_REGION_PAGES 4096 
