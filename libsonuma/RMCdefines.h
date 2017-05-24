@@ -6,7 +6,7 @@
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
-
+ *
  * * Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright notice,
@@ -16,7 +16,7 @@
  *   nor the names of its contributors may be used to endorse or promote
  *   products derived from this software without specific prior written
  *   permission.
-
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,9 +31,6 @@
 
 /*
  *  soNUMA library functions
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #ifndef H_RMC_DEFINES
@@ -50,39 +47,39 @@
 
 #define PAGE_SIZE 4096
 
-typedef struct wq_entry{
-    //first double-word (8 bytes)
-    uint8_t op;        //up to 64 soNUMA ops
-    volatile uint8_t SR;        //sense reverse bit
-    volatile uint8_t valid;    //set with a new WQ entry, unset when entry completed. Required for pipelining async ops
-    uint64_t buf_addr;
-    uint8_t cid;
-    uint16_t nid;
-    //second double-word (8 bytes)
-    uint64_t offset;
-    uint64_t length;
+typedef struct wq_entry {
+  uint8_t op;
+  volatile uint8_t SR;
+  //set with a new WQ entry, unset when entry completed.
+  //Required for pipelining async ops.
+  volatile uint8_t valid;
+  uint64_t buf_addr;
+  uint8_t cid;
+  uint16_t nid;
+  uint64_t offset;
+  uint64_t length;
 } wq_entry_t;
 
-typedef struct cq_entry{
-    volatile uint8_t SR;     //sense reverse bit
-    volatile uint8_t tid;
+typedef struct cq_entry { 
+  volatile uint8_t SR;
+  volatile uint8_t tid;
 } cq_entry_t;
 
 typedef struct rmc_wq {
-    wq_entry_t q[MAX_NUM_WQ];
-    uint8_t head;
-    volatile uint8_t SR;    //sense reverse bit
+  wq_entry_t q[MAX_NUM_WQ];
+  uint8_t head;
+  volatile uint8_t SR;
 } rmc_wq_t;
 
 typedef struct rmc_cq {
-    cq_entry_t q[MAX_NUM_WQ];
-    uint8_t tail;
-    volatile uint8_t SR;    //sense reverse bit
+  cq_entry_t q[MAX_NUM_WQ];
+  uint8_t tail;
+  volatile uint8_t SR;
 } rmc_cq_t;
 
 typedef struct qp_info {
-    int node_cnt;
-    int this_nid;
+  int node_cnt;
+  int this_nid;
 } qp_info_t;
 
 #endif /* H_RMC_DEFINES */

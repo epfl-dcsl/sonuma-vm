@@ -31,9 +31,6 @@
 
 /*
  *  SoftRMC-specific extensions for libsonuma
- *
- *  Authors: 
- *  	Stanko Novakovic <stanko.novakovic@epfl.ch>
  */
 
 #include <malloc.h>

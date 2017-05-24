@@ -50,6 +50,6 @@ taskset -c 0 ./bench_async 1 w
 ```
 
 ### Platform limitations:
-This platform trades flexibility for performance. In particular, a Scale-Out NUMA application is bound to a single global address space, which is sufficient for the majority of use cases. Also, the size
+For performance reasons, a Scale-Out NUMA application running on this platform is bound to a single global address space, which is sufficient for the majority of use cases. Also, the size
 of the context is fixed by the RMC daemon and the kernel driver. One could try to increase the context size (these are just constants), but it is not guaranteed that the Xen hypervisor will grant access
 to all the pages.

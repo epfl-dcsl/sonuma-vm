@@ -538,8 +538,6 @@ int main(int argc, char **argv)
   
   volatile wq_entry_t *curr;
   
-  //int s;
-
 #ifdef DEBUG_PERF_RMC
   struct timespec start_time, end_time;
   uint64_t start_time_ns, end_time_ns;
@@ -559,7 +557,8 @@ int main(int argc, char **argv)
       printf("[main] buffer address %lu\n",
 	     wq->q[local_wq_tail].buf_addr);
       
-      printf("[main] nid = %d; offset = %d, len = %d\n", wq->q[local_wq_tail].nid, wq->q[local_wq_tail].offset, wq->q[local_wq_tail].length);
+      printf("[main] nid = %d; offset = %d, len = %d\n", wq->q[local_wq_tail].nid,
+	     wq->q[local_wq_tail].offset, wq->q[local_wq_tail].length);
 #endif
       curr = &(wq->q[local_wq_tail]);
       
