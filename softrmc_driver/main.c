@@ -102,20 +102,20 @@ memory_region_t *local_mr;
 #ifdef GET_DOMID
 static domid_t get_my_domid(void)
 {
-  char *domidstr;
-  domid_t domid;
+    char *domidstr;
+    domid_t domid;
 
-  domidstr = xenbus_read(XBT_NIL, "domid", "", NULL);
-  if ( IS_ERR(domidstr) ) {
-    EPRINTK("xenbus_read error\n");
-    return PTR_ERR(domidstr);
-  }
+    domidstr = xenbus_read(XBT_NIL, "domid", "", NULL);
+    if ( IS_ERR(domidstr) ) {
+        EPRINTK("xenbus_read error\n");
+        return PTR_ERR(domidstr);
+    }
 
-  domid = (domid_t) simple_strtoul(domidstr, NULL, 10);
+    domid = (domid_t) simple_strtoul(domidstr, NULL, 10);
 
-  kfree(domidstr);
+    kfree(domidstr);
 
-  return domid;
+    return domid;
 }
 #endif
 
@@ -124,55 +124,55 @@ static long shm_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
     Entry *e;    
     ioctl_info_t info;
     mr_reference_info_t *mr_info;
-    
+
     if (copy_from_user(&info, (unsigned char *)arg, sizeof(ioctl_info_t)))
-	return -EFAULT;
+        return -EFAULT;
 
     printk(KERN_CRIT "[ioctl] info.op = %d, info.node_id = %d\n", info.op, info.node_id);
 
     //requesting grant reference
     if(info.op == MR_ALLOC) {
-      apps_mem = info.ctx;
+        apps_mem = info.ctx;
     } else if(info.op == GETREF) {
-      printk(KERN_CRIT "[ioctl] Operation: GETREF for remote domain = %d\n", info.node_id);
-      printk(KERN_CRIT "[ioctl] initializing remote domain\n");
-      
-      rdomh[info.node_id].nid = info.node_id;
-      rdomh[info.node_id].domid = info.domid;
-      
-      mr_info = create_mr_reference(apps_mem, rdomh[info.node_id].domid);
-      printk(KERN_CRIT "[ioctl] reference created\n");
-      
-      //save the ref for unallocation
-      rdomh[info.node_id].mr_info = (void *)mr_info;
-      num_of_doms++;
+        printk(KERN_CRIT "[ioctl] Operation: GETREF for remote domain = %d\n", info.node_id);
+        printk(KERN_CRIT "[ioctl] initializing remote domain\n");
 
-      if(mr_info != NULL) {
-	info.desc_gref = mr_info->root_mr_ref->root_desc_gref;      
-	printk(KERN_CRIT "[ioctl] Reference ID is %u\n", info.desc_gref);      
-	if (copy_to_user((unsigned char *)arg, &info, sizeof(ioctl_info_t)))
-	  return -EFAULT;
-      }
+        rdomh[info.node_id].nid = info.node_id;
+        rdomh[info.node_id].domid = info.domid;
+
+        mr_info = create_mr_reference(apps_mem, rdomh[info.node_id].domid);
+        printk(KERN_CRIT "[ioctl] reference created\n");
+
+        //save the ref for unallocation
+        rdomh[info.node_id].mr_info = (void *)mr_info;
+        num_of_doms++;
+
+        if(mr_info != NULL) {
+            info.desc_gref = mr_info->root_mr_ref->root_desc_gref;      
+            printk(KERN_CRIT "[ioctl] Reference ID is %u\n", info.desc_gref);      
+            if (copy_to_user((unsigned char *)arg, &info, sizeof(ioctl_info_t)))
+                return -EFAULT;
+        }
     } else if(info.op == PUTREF) {
-      printk(KERN_CRIT "[ioctl] Operation: PUTREF for remote domain = %d\n", info.node_id);
-      rdomh[info.node_id].gref = info.desc_gref;
-      printk(KERN_CRIT "[ioctl] reference recorded %u\n", rdomh[info.node_id].gref);       
+        printk(KERN_CRIT "[ioctl] Operation: PUTREF for remote domain = %d\n", info.node_id);
+        rdomh[info.node_id].gref = info.desc_gref;
+        printk(KERN_CRIT "[ioctl] reference recorded %u\n", rdomh[info.node_id].gref);       
     } else if(info.op == RUNMAP) { 
-	printk(KERN_CRIT "[ioctl] this is unmap operation\n");
-	e = &rdomh[info.node_id];
-	if(mr_unmap(e, 0)) {
-	    printk(KERN_CRIT "[ioctl] unmapping failed\n");
-	    return -1;
-	}
+        printk(KERN_CRIT "[ioctl] this is unmap operation\n");
+        e = &rdomh[info.node_id];
+        if(mr_unmap(e, 0)) {
+            printk(KERN_CRIT "[ioctl] unmapping failed\n");
+            return -1;
+        }
     } else {
-	printk(KERN_CRIT "[ioctl] this is mmap operation\n");
-	current_entry = &rdomh[info.node_id];
-	printk(KERN_CRIT "[ioctl] shm_ioctl: domid = %d, nid = %d, gref = %d\n",
-	       current_entry->domid, current_entry->nid, current_entry->gref);
-	if(current_entry == NULL) {
-	    printk(KERN_CRIT "[ioctl] domain not found\n");
-	    return -1;
-	}
+        printk(KERN_CRIT "[ioctl] this is mmap operation\n");
+        current_entry = &rdomh[info.node_id];
+        printk(KERN_CRIT "[ioctl] shm_ioctl: domid = %d, nid = %d, gref = %d\n",
+                current_entry->domid, current_entry->nid, current_entry->gref);
+        if(current_entry == NULL) {
+            printk(KERN_CRIT "[ioctl] domain not found\n");
+            return -1;
+        }
     }
 
     return 0;
@@ -182,24 +182,24 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
 {
     int ret;
     long length = vma->vm_end - vma->vm_start; 
-    
+
     printk(KERN_CRIT "[shm_mmap] vma size %lu\n", (unsigned long)length);
-    
+
     //map the physically contiguous memory area into the caller's address space
     if(current_entry != NULL) {
-      printk(KERN_CRIT "[shm_mmap] shm_mmap: mapping remote memory region\n");
-      //memory map granted page directly to the user
-      printk(KERN_CRIT "[shm_mmap] shm_mmap: domid = %d, nid = %d, gref = %d\n",
-	     current_entry->domid, current_entry->nid, current_entry->gref);
-      
-      ret = mr_map(current_entry->domid, current_entry->gref, 0, current_entry, vma);
-      if(ret) {
-	printk(KERN_CRIT "[shm_mmap] mapping remote region failed\n");
-	return -EINVAL;
-      }
+        printk(KERN_CRIT "[shm_mmap] shm_mmap: mapping remote memory region\n");
+        //memory map granted page directly to the user
+        printk(KERN_CRIT "[shm_mmap] shm_mmap: domid = %d, nid = %d, gref = %d\n",
+                current_entry->domid, current_entry->nid, current_entry->gref);
+
+        ret = mr_map(current_entry->domid, current_entry->gref, 0, current_entry, vma);
+        if(ret) {
+            printk(KERN_CRIT "[shm_mmap] mapping remote region failed\n");
+            return -EINVAL;
+        }
     } else {
-      printk(KERN_CRIT "[shm_mmap] there's nothing to mmap\n");
-      return -EINVAL;
+        printk(KERN_CRIT "[shm_mmap] there's nothing to mmap\n");
+        return -EINVAL;
     } 
 
     current_entry = NULL;
@@ -210,7 +210,7 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
 
 static int shm_open(struct inode *inode, struct file *filp)
 {
-  printk(KERN_CRIT "[shm_open] shm_open\n");
+    printk(KERN_CRIT "[shm_open] shm_open\n");
     return 0;
 }
 
@@ -223,24 +223,24 @@ static int shm_release(struct inode *inode, struct file *filp)
 static void __exit rmc_exit(void)
 {
     int i;
-    
+
     TRACE_ENTRY;
-    
+
     //release resources
     for(i=0;i<num_of_doms;i++) {
-	printk(KERN_CRIT "[rmc_exit] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
-	if(i != mynid) {
-	  Entry *e = &rdomh[i];
-	  printk(KERN_CRIT "[rmc_exit] rmc_exit: releasing mr references\n");
-	  if(e != NULL)
-	    destroy_mr_reference((mr_reference_info_t *)e->mr_info);
-	}
+        printk(KERN_CRIT "[rmc_exit] rmc_exit: rdomh[i]->nid = %d\n", rdomh[i].nid);
+        if(i != mynid) {
+            Entry *e = &rdomh[i];
+            printk(KERN_CRIT "[rmc_exit] rmc_exit: releasing mr references\n");
+            if(e != NULL)
+                destroy_mr_reference((mr_reference_info_t *)e->mr_info);
+        }
     }
-    
+
     // remove the character deivce
     cdev_del(&mmap_cdev);
     unregister_chrdev_region(mmap_dev, 1);
-    
+
     TRACE_EXIT;
 }
 
@@ -250,22 +250,22 @@ static int __init rmc_init(void)
     int ret;
 
     mr_init();
-    
+
     //register device
     if ((ret = alloc_chrdev_region(&mmap_dev, 0, 1, "mmap")) < 0) {
-	printk(KERN_ERR "[rmc_init] could not allocate major number for mmap\n");
-	goto out;
+        printk(KERN_ERR "[rmc_init] could not allocate major number for mmap\n");
+        goto out;
     }
-    
+
     //initialize the device structure and register the device with the kernel
     cdev_init(&mmap_cdev, &shmmap_fops);
     if ((ret = cdev_add(&mmap_cdev, mmap_dev, 1)) < 0) {
-	printk(KERN_ERR "[rmc_init] could not allocate chrdev for mmap\n");
+        printk(KERN_ERR "[rmc_init] could not allocate chrdev for mmap\n");
     }
-    
+
     return ret;
-    
- out:
+
+out:
     TRACE_EXIT;
     return rc;
 }

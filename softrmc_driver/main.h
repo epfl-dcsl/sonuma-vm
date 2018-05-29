@@ -79,6 +79,7 @@ typedef struct Entry {
   struct gnttab_map_grant_ref map_ops[MAX_REGION_PAGES];
   struct gnttab_unmap_grant_ref unmap_ops[MAX_REGION_PAGES];
   struct gnttab_map_grant_ref kmap_ops[MAX_REGION_PAGES];
+  struct gnttab_unmap_grant_ref kunmap_ops[MAX_REGION_PAGES]; // MARK
   struct page **pages;
 } Entry;
 
