@@ -503,7 +503,7 @@ bool mr_unmap(Entry *e, unsigned long addr)
 			  kunmap_tmp_ops, e->pages, // MARK
 			  e->page_cnt);
   if (err) {
-      kfree(kunmap_tmp_ops);
+      kfree(kunmap_tmp_ops); //MARK
     return err;
   }
   
