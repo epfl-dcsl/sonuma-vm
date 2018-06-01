@@ -33,7 +33,7 @@ SHELL = /bin/sh
 CC    = g++
 
 CFLAGS	= -I$(LIBSONUMA_PATH)
-LDFLAGS	= -L../libsonuma -lsonuma -lrt
+LDFLAGS	= -L$(LIBSONUMA_PATH) -lsonuma -lrt
 
 TARGET  = bench_sync
 
@@ -59,16 +59,16 @@ OBJECTS2 = $(SOURCES2:.c=.o)
 bench_sync: $(TARGET) $(TARGET1) $(TARGET2)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJECTS) 
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LDFLAGS) 
 	cp ./bench_sync ../bin/
 #rread_server: $(TARGET1)
 
 $(TARGET1): $(OBJECTS1)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET1) $(OBJECTS1)
+	$(CC) $(CFLAGS) -o $(TARGET1) $(OBJECTS1) $(LDFLAGS) 
 	cp ./bench_server ../bin/
 
 $(TARGET2): $(OBJECTS2)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET2) $(OBJECTS2)
+	$(CC) $(CFLAGS) -o $(TARGET2) $(OBJECTS2) $(LDFLAGS) 
 	cp ./bench_async ../bin/
 
 clean:
