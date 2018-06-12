@@ -69,6 +69,10 @@
 static dev_t mmap_dev;
 static struct cdev mmap_cdev;
 
+// MARK : rmc devices and classes
+static struct class* rmc_class;
+static struct device* rmc_dev;
+
 //my NID
 static int mynid = 0;
 module_param(mynid, int, 0);
@@ -210,13 +214,13 @@ static int shm_mmap(struct file *filp, struct vm_area_struct *vma)
 
 static int shm_open(struct inode *inode, struct file *filp)
 {
-    printk(KERN_CRIT "[shm_open] shm_open\n");
+    printk(KERN_CRIT "[shm_open] shm_open called from sonuma_ko\n");
     return 0;
 }
 
 static int shm_release(struct inode *inode, struct file *filp)
 {
-    printk(KERN_CRIT "[shm_release] shm_release\n");
+    printk(KERN_CRIT "[shm_release] shm_release called from sonuma_ko\n");
     return 0;
 }
 
@@ -237,6 +241,10 @@ static void __exit rmc_exit(void)
         }
     }
 
+    // MARK: deactivate device
+    device_destroy(rmc_class,1); // minor = 1
+    class_destroy(rmc_class);
+
     // remove the character deivce
     cdev_del(&mmap_cdev);
     unregister_chrdev_region(mmap_dev, 1);
@@ -252,16 +260,24 @@ static int __init rmc_init(void)
     mr_init();
 
     //register device
-    if ((ret = alloc_chrdev_region(&mmap_dev, 0, 1, "mmap")) < 0) {
-        printk(KERN_ERR "[rmc_init] could not allocate major number for mmap\n");
+    if ((ret = alloc_chrdev_region(&mmap_dev, 0, 1, "sonuma_mmap")) < 0) {
+        printk(KERN_ERR "[rmc_init] could not allocate major number for sonuma_mmap\n");
         goto out;
     }
+
+    printk(KERN_DEBUG "[rmc_init] for sonuma_mmap got major number %x\n",mmap_dev);
 
     //initialize the device structure and register the device with the kernel
     cdev_init(&mmap_cdev, &shmmap_fops);
     if ((ret = cdev_add(&mmap_cdev, mmap_dev, 1)) < 0) {
-        printk(KERN_ERR "[rmc_init] could not allocate chrdev for mmap\n");
+        printk(KERN_ERR "[rmc_init] could not allocate chrdev for sonuma_mmap\n");
     }
+
+    // MARK: explicitly create rmc device??
+    rmc_class = class_create(THIS_MODULE, "sonuma_rmc");
+    rmc_dev = device_create( rmc_class, NULL /* no parent */,
+                             mmap_dev /* major */, NULL /* no additional*/,
+                            "sonuma_mmap" /* name */);
 
     return ret;
 
