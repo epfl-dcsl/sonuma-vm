@@ -33,8 +33,6 @@
  *  Remote memory mapper for the Xen hypervisor
  */
 
-#include <xen/evtchn.h>
-
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -77,6 +75,7 @@ static unsigned long any_v2p(unsigned long vaddr)
 {
   struct mm_struct *mm = current->mm;
   pgd_t *pgd = pgd_offset(mm, vaddr);
+  //p4d_t *p4d; // MARK: uncomment for 5-level PTEs
   pud_t *pud;
   pmd_t *pmd;
   pte_t *pte;
@@ -92,6 +91,20 @@ static unsigned long any_v2p(unsigned long vaddr)
     printk(KERN_ALERT "[any_v2p] Alert: pgd not present %lu\n", (long unsigned int)pgd);
     goto out;
   }
+
+  // MARK: updates this to work with kernel versions w. PTE-5 level
+  /*
+  p4d = p4d_offset(pgd, vaddr);
+  if (bad_address(p4d)) {
+    printk(KERN_ALERT "[any_v2p] Alert: bad address of p4d %p\n", p4d);
+    goto bad;
+  }
+  if (!p4d_present(*p4d) || p4d_large(*p4d)) {
+    printk(KERN_ALERT "[any_v2p] Alert: p4d not present %lu\n", (long unsigned int)p4d);
+    goto out;
+  }
+  */
+  // END MARk
 
   pud = pud_offset(pgd, vaddr);
   if (bad_address(pud)) {
@@ -306,7 +319,8 @@ static int map_grant_pages(Entry *e)
     
   //allocate pages
   e->pages = kcalloc(e->page_cnt, sizeof(e->pages[0]), GFP_KERNEL);
-  if(alloc_xenballooned_pages(e->page_cnt, e->pages, false /* lowmem */))
+  //if(alloc_xenballooned_pages(e->page_cnt, e->pages, false /* lowmem */))
+  if(alloc_xenballooned_pages(e->page_cnt, e->pages)) // MARK: removed lowmem?
     goto err;
    
   //map
@@ -477,12 +491,21 @@ bool mr_unmap(Entry *e, unsigned long addr)
 {
   int i;
   int err = 0;
+
+  // MARK: Added specific structure to remove compilation warnings.
+    struct gnttab_unmap_grant_ref* kunmap_tmp_ops = kcalloc(1,sizeof(struct gnttab_unmap_grant_ref),GFP_KERNEL);
+    kunmap_tmp_ops->host_addr = e->kmap_ops->host_addr;
+    kunmap_tmp_ops->dev_bus_addr = e->kmap_ops->dev_bus_addr;
+    kunmap_tmp_ops->handle = e->kmap_ops->handle;
   
   err = gnttab_unmap_refs(e->unmap_ops,
-			  e->kmap_ops, e->pages,
+			  //e->kmap_ops, e->pages,
+			  kunmap_tmp_ops, e->pages, // MARK
 			  e->page_cnt);
-  if (err)
+  if (err) {
+      kfree(kunmap_tmp_ops); //MARK
     return err;
+  }
   
   for (i = 0; i < e->page_cnt; i++) {
     if (e->unmap_ops[i].status)
@@ -497,6 +520,6 @@ bool mr_unmap(Entry *e, unsigned long addr)
     free_xenballooned_pages(e->page_cnt, e->pages);
   
   printk(KERN_CRIT "[mr_unmap] mr_unmap: free ballooned pages\n");
-    
+  kfree(kunmap_tmp_ops);  
   return err;
 }

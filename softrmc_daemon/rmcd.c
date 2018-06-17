@@ -38,6 +38,7 @@
 #include <sys/shm.h>
 #include <unistd.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <vector>
 #include <algorithm>
@@ -202,6 +203,7 @@ static int rmc_open(char *shm_name)
   printf("[rmc_open] open called in VM mode\n");
   
   if ((fd=open(shm_name, O_RDWR|O_SYNC)) < 0) {
+  //if ((fd=open(shm_name, O_RDWR|O_SYNC|O_CREAT, S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH )) < 0) { // MARK: test w. creating file?
     return -1;
   }
   
@@ -243,8 +245,10 @@ static int net_init(int node_cnt, int this_nid, char *filename)
   
   //retreive ID, IP, DOMID
   fp = fopen(filename, "r");
-  if (fp == NULL)
+  if (fp == NULL) {
+    printf("[network] Net_init failed to open %s., die\n",filename);
     exit(EXIT_FAILURE);
+  }
 
   //get server information
   while ((read = getline(&line, &len, fp)) != -1) {
@@ -282,31 +286,31 @@ int ctx_map(char **mem, unsigned page_cnt)
 
   //map the rest of pgas
   for(i=0; i<node_cnt; i++) {
-    if(i != this_nid) {
-      info.node_id = i;
-      if(ioctl(fd, 0, (void *)&info) == -1) {
-	printf("[ctx_map] ioctl failed\n");
-	return -1;
-      }
-      
-      printf("[ctx_map] mapping memory of node %d\n", i);
-      
-      ctx[i] = (char *)mmap(NULL, page_cnt * PAGE_SIZE,
-			    PROT_READ | PROT_WRITE,
-			    MAP_SHARED, fd, 0);
-      if(ctx[i] == MAP_FAILED) {
-	close(fd);
-	perror("[ctx_map] error mmapping the file");
-	exit(EXIT_FAILURE);
-      }
+      if(i != this_nid) {
+          info.node_id = i;
+          if(ioctl(fd, 0, (void *)&info) == -1) {
+              printf("[ctx_map] ioctl failed\n");
+              return -1;
+          }
+
+          printf("[ctx_map] mapping memory of node %d\n", i);
+
+          ctx[i] = (char *)mmap(NULL, page_cnt * PAGE_SIZE,
+                  PROT_READ | PROT_WRITE,
+                  MAP_SHARED, fd, 0);
+          if(ctx[i] == MAP_FAILED) {
+              close(fd);
+              perror("[ctx_map] error mmapping the file");
+              exit(EXIT_FAILURE);
+          }
 
 #ifdef DEBUG_RMC
-      //for testing purposes
-      for(j=0; j<(dom_region_size)/sizeof(unsigned long); j++)
-	printf("%lu\n", *((unsigned long *)ctx[i]+j));
+          //for testing purposes
+          for(j=0; j<(dom_region_size)/sizeof(unsigned long); j++)
+              printf("%lu\n", *((unsigned long *)ctx[i]+j));
 #endif
-    }
-  }
+      }
+  } // end map of pgas
   
   printf("[ctx_map] context successfully created, %lu bytes\n",
 	 (unsigned long)page_cnt * PAGE_SIZE * node_cnt);
@@ -330,7 +334,11 @@ int ctx_alloc_grant_map(char **mem, unsigned page_cnt)
   printf("[ctx_alloc_grant_map] soft_rmc_connect <- \n");
 
   //allocate the pointer array for PGAS
-  fd = rmc_open((char *)"/root/node");
+  fd = rmc_open((char *)"/dev/sonuma_rmc");
+  if( fd < 0 ) {
+      printf("[ctx_alloc_grant_map]\t rmc_open failed with errno == %d... Killing.\n",errno);
+      return fd;
+  }
 
   //first allocate memory
   unsigned long *ctxl;
@@ -402,52 +410,52 @@ int ctx_alloc_grant_map(char **mem, unsigned page_cnt)
   for(i=0; i<node_cnt; i++) {
     if(i != this_nid) {
       if(i > this_nid) {
-	printf("[ctx_alloc_grant_map] server accept..\n");
-	char *remote_ip;
-       
-	socklen_t slen = sizeof(raddr);
+          printf("[ctx_alloc_grant_map] server accept..\n");
+          char *remote_ip;
 
-       	sinfo[i].fd = accept(listen_fd, (struct sockaddr*)&raddr, &slen);
+          socklen_t slen = sizeof(raddr);
 
-	//retrieve nid of the remote node
-	remote_ip = inet_ntoa(raddr.sin_addr);
-	
-	printf("[ctx_alloc_grant_map] Connect received from %s, on port %d\n",
-	       remote_ip, raddr.sin_port);
+          sinfo[i].fd = accept(listen_fd, (struct sockaddr*)&raddr, &slen);
 
-	//receive the reference to the remote memory
-	while(1) {
-	  n = recv(sinfo[i].fd, (char *)&srv_idx, sizeof(int), 0);
-	  if(n == sizeof(int)) {
-	    printf("[ctx_alloc_grant_map] received the node_id\n");
-	    break;
-	  }
-	}
+          //retrieve nid of the remote node
+          remote_ip = inet_ntoa(raddr.sin_addr);
 
-	printf("[ctx_alloc_grant_map] server ID is %u\n", srv_idx);
+          printf("[ctx_alloc_grant_map] Connect received from %s, on port %d\n",
+                  remote_ip, raddr.sin_port);
+
+          //receive the reference to the remote memory
+          while(1) {
+              n = recv(sinfo[i].fd, (char *)&srv_idx, sizeof(int), 0);
+              if(n == sizeof(int)) {
+                  printf("[ctx_alloc_grant_map] received the node_id\n");
+                  break;
+              }
+          }
+
+          printf("[ctx_alloc_grant_map] server ID is %u\n", srv_idx);
       } else {
-	printf("[ctx_alloc_grant_map] server connect..\n");
+          printf("[ctx_alloc_grant_map] server connect..\n");
 
-	memset(&raddr, 0, sizeof(raddr));
-	raddr.sin_family = AF_INET;
-	inet_aton(sinfo[i].ip, &raddr.sin_addr);
-	raddr.sin_port = htons(PORT);
+          memset(&raddr, 0, sizeof(raddr));
+          raddr.sin_family = AF_INET;
+          inet_aton(sinfo[i].ip, &raddr.sin_addr);
+          raddr.sin_port = htons(PORT);
 
-	sinfo[i].fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+          sinfo[i].fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	while(1) {
-	  if(connect(sinfo[i].fd, (struct sockaddr *)&raddr, sizeof(raddr)) == 0) {
-	    printf("[ctx_alloc_grant_map] Connected to %s\n", sinfo[i].ip);
-	    break;
-	  }
-	}
-	unsigned n = send(sinfo[i].fd, (char *)&this_nid, sizeof(int), 0); //MSG_DONTWAIT
-	if(n < sizeof(int)) {
-	  printf("[ctx_alloc_grant_map] ERROR: couldn't send the node_id\n");
-	  return -1;
-	}
+          while(1) {
+              if(connect(sinfo[i].fd, (struct sockaddr *)&raddr, sizeof(raddr)) == 0) {
+                  printf("[ctx_alloc_grant_map] Connected to %s\n", sinfo[i].ip);
+                  break;
+              }
+          }
+          unsigned n = send(sinfo[i].fd, (char *)&this_nid, sizeof(int), 0); //MSG_DONTWAIT
+          if(n < sizeof(int)) {
+              printf("[ctx_alloc_grant_map] ERROR: couldn't send the node_id\n");
+              return -1;
+          }
 
-	srv_idx = i;
+          srv_idx = i;
       }
 
       //first get the reference for this domain
@@ -455,28 +463,28 @@ int ctx_alloc_grant_map(char **mem, unsigned page_cnt)
       info.node_id = srv_idx;
       info.domid = sinfo[srv_idx].domid;
       if(ioctl(fd, 0, (void *)&info) == -1) {
-	printf("[ctx_alloc_grant_map] failed to unmap a remote region\n");
-	return -1;
+          printf("[ctx_alloc_grant_map] failed to unmap a remote region\n");
+          return -1;
       }
 
       //send the reference to the local memory
       unsigned n = send(sinfo[srv_idx].fd, (char *)&info.desc_gref, sizeof(int), 0); //MSG_DONTWAIT
       if(n < sizeof(int)) {
-	printf("[ctx_alloc_grant_map] ERROR: couldn't send the grant reference\n");
-	return -1;
+          printf("[ctx_alloc_grant_map] ERROR: couldn't send the grant reference\n");
+          return -1;
       }
-      
+
       printf("[ctx_alloc_grant_map] grant reference sent: %u\n", info.desc_gref);
 
       //receive the reference to the remote memory
       while(1) {
-	n = recv(sinfo[srv_idx].fd, (char *)&info.desc_gref, sizeof(int), 0);
-	if(n == sizeof(int)) {
-	  printf("[ctx_alloc_grant_map] received the grant reference\n");
-	  break;
-	}
+          n = recv(sinfo[srv_idx].fd, (char *)&info.desc_gref, sizeof(int), 0);
+          if(n == sizeof(int)) {
+              printf("[ctx_alloc_grant_map] received the grant reference\n");
+              break;
+          }
       }
-	
+
       printf("[ctx_alloc_grant_map] grant reference received: %u\n", info.desc_gref);
     
       //put the ref for this domain
@@ -485,8 +493,8 @@ int ctx_alloc_grant_map(char **mem, unsigned page_cnt)
 	printf("[ctx_alloc_grant_map] failed to unmap a remote region\n");
 	return -1;
       }
-    }    
-  } //for
+    }
+  } //for loop over all node_cnt
 
   //now memory map all the regions
   ctx_map(mem, page_cnt);

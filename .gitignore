@@ -1,0 +1,17 @@
+*.o
+*.o.*
+*.mod.*
+*.so
+*.ko
+bin/
+sample_code/bench_async
+sample_code/bench_server
+sample_code/bench_sync
+softrmc_driver/*.cmd
+softrmc_driver/*.o
+softrmc_driver/.tmp_versions/
+softrmc_driver/Module.symvers
+softrmc_driver/modules.order
+softrmc_daemon/rmcd
+*.txt
+tags

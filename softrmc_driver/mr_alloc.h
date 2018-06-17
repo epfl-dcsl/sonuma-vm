@@ -36,6 +36,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
+#include <linux/vmalloc.h> // MARK: compile on Centos ICC 6 clean image
 
 #include <xen/hypercall.h>
 #include <xen/grant_table.h>

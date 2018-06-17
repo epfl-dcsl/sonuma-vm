@@ -29,6 +29,9 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+include makefile.defs
+export
+
 SUBDIRS = libsonuma softrmc_daemon softrmc_driver sample_code
 CLEANDIRS = $(SUBDIRS:%=clean-%)
 
