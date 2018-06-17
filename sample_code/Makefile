@@ -33,7 +33,7 @@ SHELL = /bin/sh
 CC    = g++
 
 CFLAGS	= -I$(LIBSONUMA_PATH)
-LDFLAGS	= -L$(LIBSONUMA_PATH) -lsonuma -lrt
+LDFLAGS	= -L$(LIBSONUMA_PATH) -lsonuma -lrt -Wl,-rpath,$(LIBSONUMA_PATH)
 
 TARGET  = bench_sync
 

@@ -245,8 +245,10 @@ static int net_init(int node_cnt, int this_nid, char *filename)
   
   //retreive ID, IP, DOMID
   fp = fopen(filename, "r");
-  if (fp == NULL)
+  if (fp == NULL) {
+    printf("[network] Net_init failed to open %s., die\n",filename);
     exit(EXIT_FAILURE);
+  }
 
   //get server information
   while ((read = getline(&line, &len, fp)) != -1) {
@@ -284,31 +286,31 @@ int ctx_map(char **mem, unsigned page_cnt)
 
   //map the rest of pgas
   for(i=0; i<node_cnt; i++) {
-    if(i != this_nid) {
-      info.node_id = i;
-      if(ioctl(fd, 0, (void *)&info) == -1) {
-	printf("[ctx_map] ioctl failed\n");
-	return -1;
-      }
-      
-      printf("[ctx_map] mapping memory of node %d\n", i);
-      
-      ctx[i] = (char *)mmap(NULL, page_cnt * PAGE_SIZE,
-			    PROT_READ | PROT_WRITE,
-			    MAP_SHARED, fd, 0);
-      if(ctx[i] == MAP_FAILED) {
-	close(fd);
-	perror("[ctx_map] error mmapping the file");
-	exit(EXIT_FAILURE);
-      }
+      if(i != this_nid) {
+          info.node_id = i;
+          if(ioctl(fd, 0, (void *)&info) == -1) {
+              printf("[ctx_map] ioctl failed\n");
+              return -1;
+          }
+
+          printf("[ctx_map] mapping memory of node %d\n", i);
+
+          ctx[i] = (char *)mmap(NULL, page_cnt * PAGE_SIZE,
+                  PROT_READ | PROT_WRITE,
+                  MAP_SHARED, fd, 0);
+          if(ctx[i] == MAP_FAILED) {
+              close(fd);
+              perror("[ctx_map] error mmapping the file");
+              exit(EXIT_FAILURE);
+          }
 
 #ifdef DEBUG_RMC
-      //for testing purposes
-      for(j=0; j<(dom_region_size)/sizeof(unsigned long); j++)
-	printf("%lu\n", *((unsigned long *)ctx[i]+j));
+          //for testing purposes
+          for(j=0; j<(dom_region_size)/sizeof(unsigned long); j++)
+              printf("%lu\n", *((unsigned long *)ctx[i]+j));
 #endif
-    }
-  }
+      }
+  } // end map of pgas
   
   printf("[ctx_map] context successfully created, %lu bytes\n",
 	 (unsigned long)page_cnt * PAGE_SIZE * node_cnt);
@@ -491,8 +493,8 @@ int ctx_alloc_grant_map(char **mem, unsigned page_cnt)
 	printf("[ctx_alloc_grant_map] failed to unmap a remote region\n");
 	return -1;
       }
-    }    
-  } //for
+    }
+  } //for loop over all node_cnt
 
   //now memory map all the regions
   ctx_map(mem, page_cnt);

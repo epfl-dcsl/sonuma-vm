@@ -1,4 +1,6 @@
 *.o
+*.o.*
+*.mod.*
 *.so
 *.ko
 bin/
@@ -13,4 +15,3 @@ softrmc_driver/modules.order
 softrmc_daemon/rmcd
 *.txt
 tags
-
